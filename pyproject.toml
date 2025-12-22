@@ -1,0 +1,85 @@
+[project]
+name = "mdvault-mcp-server"
+version = "0.1.0"
+description = "MCP server for markdown vaults integration"
+readme = "README.md"
+requires-python = ">=3.14"
+
+dependencies = [
+    "fastmcp>=2.14.1",
+]
+
+[project.scripts]
+mcp-start = "mdvault_mcp_server.__main__:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mdvault_mcp_server"]
+
+## -- UV     -------------------------
+[tool.uv]
+config-settings = { editable_mode = "compat" }
+
+
+# -- PYRIGHT  -------------------------
+[tool.pyright]
+reportUnknownMemberType = "error"
+reportMissingTypeStubs = "error"
+
+[[tool.pyright.overrides]]
+paths = ["**/site-packages/**"]
+reportUnknownMemberType = "none"
+reportMissingTypeStubs = "none"
+
+
+## -- RUFF   -------------------------
+[tool.ruff]
+line-length = 100
+exclude = [
+    ".git", 
+    "__pycache__",
+    "build",
+    "dist",
+    ".venv",
+    "venv",
+    ".mypy_cache",
+    ".ruff_cache",
+    ".eggs",
+    "*.egg-info"
+]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+docstring-code-format = true
+docstring-code-line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "B",    # flake8-bugbear
+    "I",    # isort
+    "UP",   # pyupgrade
+    "C4",   # flake8-comprehensions
+    # "D",    # pydocstyle
+    "N",    # pep8-naming
+    "A",    # flake8-builtins
+    "Q",    # flake8-quotes
+    "PL",   # pylint
+    "RUF",  # Ruff-specific rules
+]
+ignore=[ "D", "N812" ]
+fixable = ["ALL"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # Ignore unused imports in __init__.py files
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+
