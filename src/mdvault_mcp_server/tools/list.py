@@ -2,6 +2,7 @@
 # pyright is being too picky in these ones as the callers are outside of this context
 
 from pathlib import Path
+
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_path
