@@ -5,6 +5,7 @@ from .tools import (
     register_read_tools,
     register_search_tools,
     register_update_tools,
+    register_zettelkasten_tools,
 )
 
 
@@ -22,5 +23,6 @@ def create_server() -> FastMCP:
     register_read_tools(mcp)
     register_search_tools(mcp)
     register_update_tools(mcp)
+    register_zettelkasten_tools(mcp)
 
     return mcp
