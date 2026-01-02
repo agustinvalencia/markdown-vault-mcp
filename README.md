@@ -9,7 +9,7 @@ A sister project to [mdvault](https://github.com/agustinvalencia/mdvault), provi
 While **mdvault** provides a Rust CLI and TUI for human interaction with your vault (templates, captures, macros, validation), **markdown-vault-mcp** exposes your vault to AI assistants through MCP. Together, they form a complete toolkit for managing markdown-based knowledge systems.
 
 ```mermaid
-flowchart LR
+flowchart TB
     A[AI Assistant<br/>Claude, etc.] -->|MCP| B[markdown-vault-mcp<br/>Python/FastMCP]
     B --> C[Markdown Vault<br/>.md files]
     B -.->|future| D[mdvault<br/>Rust CLI]
