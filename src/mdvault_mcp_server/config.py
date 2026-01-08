@@ -1,14 +1,37 @@
 import os
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-MARKDOWN_VAULT_PATH = os.getenv("MARKDOWN_VAULT_PATH")
+# Default configuration
+DEFAULT_DAILY_FORMAT = "daily/%Y-%m-%d.md"
+
+def load_config() -> dict[str, str]:
+    config_path = Path("mcp_config.toml")
+    if not config_path.exists():
+        return {}
+    
+    try:
+        with open(config_path, "rb") as f:
+            return tomllib.load(f)
+    except Exception as e:
+        # We assume no config if it fails to load, but logging would be good in production
+        print(f"Warning: Failed to load mcp_config.toml: {e}")
+        return {}
+
+_config = load_config()
+
+# Vault Path Priority:
+# 1. Environment Variable MARKDOWN_VAULT_PATH
+# 2. Config file 'vault_path'
+MARKDOWN_VAULT_PATH = os.getenv("MARKDOWN_VAULT_PATH") or _config.get("vault_path")
 
 if MARKDOWN_VAULT_PATH:
     VAULT_PATH = Path(MARKDOWN_VAULT_PATH)
 else:
-    raise ValueError("MARKDOWN_VAULT_PATH environment variable is not set")
+    raise ValueError("MARKDOWN_VAULT_PATH environment variable is not set and 'vault_path' not found in mcp_config.toml")
 
+DAILY_NOTE_FORMAT = _config.get("daily_format", DEFAULT_DAILY_FORMAT)
 
 @dataclass
 class Result:

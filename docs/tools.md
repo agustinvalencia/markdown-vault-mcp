@@ -252,6 +252,29 @@ Result: Content appended to end of note
 
 ---
 
+### `add_to_daily_note`
+
+Append content to today's daily note. Automatically creates the note and directory if they don't exist.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `content` | string | Yes | - | Content to append |
+| `subsection` | string | No | - | Optional heading to append under |
+
+**Returns:** Success message or error description.
+
+**Configuration:**
+- Uses `daily_format` from `mcp_config.toml` if present (default: `daily/YYYY-MM-DD.md`).
+
+**Example:**
+```
+Input: content="Finished the API review", subsection="Evening Update"
+Result: Appended content to subsection 'Evening Update' in daily/2026-01-08.md
+```
+
+---
+
 ### `update_task_status`
 
 Toggle a markdown task checkbox in a note.
