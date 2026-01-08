@@ -8,6 +8,7 @@ from typing import Any
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
+from .common import append_content_logic
 from .frontmatter import update_note_metadata
 
 
@@ -44,12 +45,13 @@ def register_update_tools(mcp: FastMCP) -> None:
             return f"Error updating metadata: {e}"
 
     @mcp.tool()
-    def append_to_note(note_path: str, content: str) -> str:
-        """Append content to the end of a note.
+    def append_to_note(note_path: str, content: str, subsection: str | None = None) -> str:
+        """Append content to a note, optionally within a specific subsection.
 
         Args:
             note_path: Path to the note relative to vault root
-            content: Content to append (will be added after a newline)
+            content: Content to append
+            subsection: Optional heading title to append under. If not found, creates it at end.
 
         Returns:
             Success message or error description
@@ -61,12 +63,16 @@ def register_update_tools(mcp: FastMCP) -> None:
 
         try:
             existing = full_path.read_text(encoding="utf-8")
-            # Ensure there's a newline before appending
-            if existing and not existing.endswith("\n"):
-                existing += "\n"
-            new_content = existing + content
+            new_content, created_new = append_content_logic(existing, content, subsection)
+
             full_path.write_text(new_content, encoding="utf-8")
-            return f"Appended content to {note_path}"
+
+            if created_new:
+                return f"Created subsection '{subsection}' and appended content in {note_path}"
+            elif subsection:
+                return f"Appended content to subsection '{subsection}' in {note_path}"
+            else:
+                return f"Appended content to {note_path}"
         except Exception as e:
             return f"Error appending to note: {e}"
 

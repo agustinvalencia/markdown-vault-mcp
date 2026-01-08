@@ -1,6 +1,6 @@
+import os
 from dataclasses import dataclass
 from pathlib import Path
-import os
 
 MARKDOWN_VAULT_PATH = os.getenv("MARKDOWN_VAULT_PATH")
 
@@ -27,11 +27,11 @@ def validate_path(path: Path) -> Result:
     """
     try:
         if not path.resolve().is_relative_to(VAULT_PATH.resolve()):
-            res = f"Invalid path, must be within vault: {str(path)}"
+            res = f"Invalid path, must be within vault: {path!s}"
             return Result(False, res)
 
         if not path.exists():
-            res = f"Path does not exists : {str(path)}"
+            res = f"Path does not exists : {path!s}"
             return Result(False, res)
 
         return Result(True, "")

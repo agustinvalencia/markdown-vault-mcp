@@ -233,13 +233,14 @@ Result: Updates frontmatter, preserving existing fields like title and tags
 
 ### `append_to_note`
 
-Append content to the end of a note.
+Append content to a note, optionally within a specific subsection.
 
 **Parameters:**
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `note_path` | string | Yes | Path to note relative to vault root |
-| `content` | string | Yes | Content to append |
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `note_path` | string | Yes | - | Path to note relative to vault root |
+| `content` | string | Yes | - | Content to append |
+| `subsection` | string | No | - | Optional heading to append under |
 
 **Returns:** Success message or error description.
 
