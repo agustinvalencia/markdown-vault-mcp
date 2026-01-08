@@ -7,7 +7,7 @@ from pathlib import Path
 DEFAULT_DAILY_FORMAT = "daily/%Y-%m-%d.md"
 
 def load_config() -> dict[str, str]:
-    config_path = Path("mcp_config.toml")
+    config_path = Path(os.path.expanduser("~/.config/mdvault/mcp_config.toml"))
     if not config_path.exists():
         return {}
     
@@ -16,7 +16,7 @@ def load_config() -> dict[str, str]:
             return tomllib.load(f)
     except Exception as e:
         # We assume no config if it fails to load, but logging would be good in production
-        print(f"Warning: Failed to load mcp_config.toml: {e}")
+        print(f"Warning: Failed to load {config_path}: {e}")
         return {}
 
 _config = load_config()
