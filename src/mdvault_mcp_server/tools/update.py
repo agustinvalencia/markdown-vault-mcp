@@ -9,7 +9,7 @@ from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
 from .common import append_content_logic
-from .frontmatter import update_note_metadata
+from .frontmatter import update_note_content, update_note_metadata
 
 
 def register_update_tools(mcp: FastMCP) -> None:
@@ -62,17 +62,19 @@ def register_update_tools(mcp: FastMCP) -> None:
             return result.msg
 
         try:
-            existing = full_path.read_text(encoding="utf-8")
-            new_content, created_new = append_content_logic(existing, content, subsection)
+            def modifier(body: str) -> tuple[str, str]:
+                new_body, created_new = append_content_logic(body, content, subsection)
+                
+                if created_new:
+                    msg = f"Created subsection '{subsection}' and appended content in {note_path}"
+                elif subsection:
+                    msg = f"Appended content to subsection '{subsection}' in {note_path}"
+                else:
+                    msg = f"Appended content to {note_path}"
+                return new_body, msg
 
-            full_path.write_text(new_content, encoding="utf-8")
+            return update_note_content(full_path, modifier)
 
-            if created_new:
-                return f"Created subsection '{subsection}' and appended content in {note_path}"
-            elif subsection:
-                return f"Appended content to subsection '{subsection}' in {note_path}"
-            else:
-                return f"Appended content to {note_path}"
         except Exception as e:
             return f"Error appending to note: {e}"
 
@@ -94,34 +96,37 @@ def register_update_tools(mcp: FastMCP) -> None:
             return result.msg
 
         try:
-            content = full_path.read_text(encoding="utf-8")
-
-            # Pattern matches markdown task: - [ ] or - [x] followed by text
-            # We look for tasks containing the task_pattern
-            task_regex = re.compile(
-                r"^(\s*[-*]\s*)\[([ xX])\](\s+" + re.escape(task_pattern) + r".*?)$",
-                re.MULTILINE,
-            )
-
-            match = task_regex.search(content)
-            if not match:
-                # Try a more lenient search - pattern anywhere in task text
-                task_regex_lenient = re.compile(
-                    r"^(\s*[-*]\s*)\[([ xX])\](\s+.*?" + re.escape(task_pattern) + r".*?)$",
+            def modifier(body: str) -> tuple[str, str]:
+                # Pattern matches markdown task: - [ ] or - [x] followed by text
+                # We look for tasks containing the task_pattern
+                task_regex = re.compile(
+                    r"^(\s*[-*]\s*)\[([ xX])\](\s+" + re.escape(task_pattern) + r".*?)$",
                     re.MULTILINE,
                 )
-                match = task_regex_lenient.search(content)
 
-            if not match:
-                return f"No task found matching: {task_pattern}"
+                match = task_regex.search(body)
+                if not match:
+                    # Try a more lenient search - pattern anywhere in task text
+                    task_regex_lenient = re.compile(
+                        r"^(\s*[-*]\s*)\[([ xX])\](\s+.*?" + re.escape(task_pattern) + r".*?)$",
+                        re.MULTILINE,
+                    )
+                    match = task_regex_lenient.search(body)
 
-            new_status = "x" if completed else " "
-            replacement = f"{match.group(1)}[{new_status}]{match.group(3)}"
-            new_content = content[: match.start()] + replacement + content[match.end() :]
+                if not match:
+                    # Return original body and error message
+                    # But wait, helper expects success. 
+                    # If we raise exception here, it will be caught by the try/except block
+                    raise ValueError(f"No task found matching: {task_pattern}")
 
-            full_path.write_text(new_content, encoding="utf-8")
+                new_status = "x" if completed else " "
+                replacement = f"{match.group(1)}[{new_status}]{match.group(3)}"
+                new_body = body[: match.start()] + replacement + body[match.end() :]
 
-            status_text = "completed" if completed else "incomplete"
-            return f"Marked task as {status_text}: {task_pattern}"
+                status_text = "completed" if completed else "incomplete"
+                return new_body, f"Marked task as {status_text}: {task_pattern}"
+
+            return update_note_content(full_path, modifier)
+
         except Exception as e:
             return f"Error updating task: {e}"

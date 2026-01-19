@@ -4,15 +4,18 @@ This document describes all available tools provided by the markdown-vault-mcp s
 
 ## Overview
 
-The server provides 14 tools organized into 5 categories:
+The server provides tools organized into 8 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
 | [List](#list-tools) | 2 | Browse vault structure |
 | [Read](#read-tools) | 3 | Read note content and metadata |
 | [Search](#search-tools) | 2 | Find notes by content |
-| [Update](#update-tools) | 3 | Modify notes and metadata |
+| [Update](#update-tools) | 4 | Modify notes and metadata |
 | [Zettelkasten](#zettelkasten-tools) | 4 | Navigate the knowledge graph |
+| [Context](#context-tools) | 3 | Manage active focus context |
+| [Tasks & Projects](#tasks--projects-tools) | 8 | Manage tasks and projects |
+| [Macros](#macro-tools) | 1 | Run automated workflows |
 
 ---
 
@@ -254,7 +257,7 @@ Result: Content appended to end of note
 
 ### `add_to_daily_note`
 
-Append content to today's daily note. Automatically creates the note and directory if they don't exist.
+Append content to today\'s daily note. Automatically creates the note and directory if they don\'t exist.
 
 **Parameters:**
 | Name | Type | Required | Default | Description |
@@ -395,14 +398,188 @@ daily/2024-01-10.md (1 shared link)
 
 ---
 
+## Context Tools
+
+Tools for managing the active project focus.
+
+### `get_active_context`
+
+Get the current focus context for the vault.
+
+**Returns:** Information about the currently focused project and note.
+
+**Example:**
+```
+Output:
+Active project: MCP
+Note: Working on OAuth implementation
+Focused since: 2026-01-18T10:30:00+01:00
+```
+
+### `set_focus`
+
+Set the active project focus.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `project` | string | Yes | - | Project ID or name to focus on |
+| `note` | string | No | - | Optional note about current work |
+
+**Returns:** Success message or error description.
+
+**Example:**
+```
+Input: project="MCP", note="Implementing new tools"
+Output: Focus set to: MCP
+```
+
+### `clear_focus`
+
+Clear the active project focus.
+
+**Returns:** Success message.
+
+---
+
+## Tasks & Projects Tools
+
+Tools for managing tasks and projects using the `mdv` CLI.
+
+### `list_projects`
+
+List all projects with task counts.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `status_filter` | string | No | - | Filter by status (e.g., 'active', 'archived') |
+
+**Returns:** Table of projects with task counts.
+
+### `get_project_status`
+
+Show detailed status of a specific project (Kanban view).
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `project_name` | string | Yes | Name or ID of the project |
+
+**Returns:** Kanban-style view of tasks in the project.
+
+### `get_project_progress`
+
+Show progress metrics for a project or all projects.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `project_name` | string | No | - | Specific project to get metrics for |
+
+**Returns:** Progress bars, completion stats, and velocity metrics.
+
+### `create_project`
+
+Create a new project.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `title` | string | Yes | - | Title of the new project |
+| `context` | string | No | - | Project context (e.g. 'work', 'personal') |
+| `status` | string | No | - | Project status (e.g. 'open', 'closed') |
+| `extra_vars` | dict | No | - | Additional variables for the template |
+
+**Returns:** Result of the creation command.
+
+### `list_tasks`
+
+List tasks with optional filters.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `project_filter` | string | No | - | Filter tasks by project name |
+| `status_filter` | string | No | - | Filter tasks by status |
+
+**Returns:** Table of matching tasks.
+
+### `get_task_details`
+
+Show details for a specific task.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `task_id` | string | Yes | The ID of the task |
+
+**Returns:** Detailed task information.
+
+### `create_task`
+
+Create a new task.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `title` | string | Yes | - | Title of the task |
+| `project` | string | No | (Active Focus) | Project name |
+| `due_date` | string | No | - | Optional due date (YYYY-MM-DD) |
+| `priority` | string | No | - | Optional priority (e.g. 'low', 'medium', 'high') |
+| `status` | string | No | - | Optional status (e.g. 'todo', 'doing', 'done') |
+| `extra_vars` | dict | No | - | Additional variables for the template |
+
+**Returns:** Result of the creation command.
+
+### `complete_task`
+
+Mark a task as done.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `task_path` | string | Yes | - | Path to task file |
+| `summary` | string | No | - | Optional completion summary |
+
+**Returns:** Confirmation message.
+
+---
+
+## Macro Tools
+
+Tools for running automated workflows.
+
+### `run_macro`
+
+Run a predefined macro using the mdv CLI.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `name` | string | Yes | - | Name of the macro to run |
+| `args` | list[str] | No | - | Optional arguments for the macro |
+| `variables` | dict | No | - | Optional variables to pass to the macro |
+
+**Returns:** Output of the macro execution.
+
+**Example:**
+```
+Input: name="daily-standup"
+Output: Macro 'daily-standup' executed successfully.
+```
+
+---
+
 ## Error Handling
 
 All tools return error messages as strings rather than raising exceptions. Common error patterns:
 
 | Error | Cause |
 |-------|-------|
-| `"Note not found: {path}"` | The specified note doesn't exist |
-| `"Invalid path, must be within vault: {path}"` | Path traversal attempt outside vault |
-| `"Only markdown files are supported"` | Attempted to read a non-.md file |
-| `"Invalid JSON: {details}"` | Malformed JSON in metadata_json parameter |
-| `"No backlinks found for {path}"` | Note has no incoming links |
+| "Note not found: {path}" | The specified note doesn\'t exist |
+| "Invalid path, must be within vault: {path}" | Path traversal attempt outside vault |
+| "Only markdown files are supported" | Attempted to read a non-.md file |
+| "Invalid JSON: {details}" | Malformed JSON in metadata_json parameter |
+| "No backlinks found for {path}" | Note has no incoming links |
+| "Error: 'mdv' executable not found" | The mdv CLI tool is not installed or not in PATH |

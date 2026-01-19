@@ -1,4 +1,38 @@
+import os
 import re
+import shutil
+import subprocess
+
+from ..config import VAULT_PATH
+
+
+def run_mdv_command(args: list[str]) -> str:
+    """
+    Helper to run mdv CLI commands.
+    """
+    mdv_path = shutil.which("mdv")
+    if not mdv_path:
+        return "Error: 'mdv' executable not found in PATH."
+
+    command = [mdv_path, *args]
+    
+    # Ensure the vault path is passed to the CLI via environment
+    env = os.environ.copy()
+    if "MARKDOWN_VAULT_PATH" not in env:
+        env["MARKDOWN_VAULT_PATH"] = str(VAULT_PATH)
+
+    try:
+        result = subprocess.run(
+            command, capture_output=True, text=True, env=env, check=False
+        )
+        
+        if result.returncode == 0:
+            return result.stdout.strip()
+        else:
+            return f"Error executing command: {' '.join(command)}\n{result.stderr}\n{result.stdout}"
+            
+    except Exception as e:
+        return f"Failed to execute mdv command: {e}"
 
 
 def append_content_logic(existing: str, content: str, subsection: str | None) -> tuple[str, bool]:
