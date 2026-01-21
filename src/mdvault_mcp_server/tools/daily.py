@@ -3,7 +3,7 @@ from datetime import date
 from fastmcp import FastMCP
 
 from ..config import DAILY_NOTE_FORMAT, VAULT_PATH
-from .common import append_content_logic
+from .common import append_content_logic, format_log_entry
 from .frontmatter import update_note_content, write_note
 
 
@@ -54,3 +54,18 @@ def register_daily_tools(mcp: FastMCP) -> None:
 
         except Exception as e:
             return f"Error updating daily note: {e}"
+
+    @mcp.tool()
+    def log_to_daily_note(content: str) -> str:
+        """Append a log entry to the 'Logs' section of today's daily note.
+
+        Format: - [[YYYY-MM-DD]] - HH:MM: Content
+
+        Args:
+            content: The log message to append.
+
+        Returns:
+            Success message or error description.
+        """
+        formatted_log = format_log_entry(content)
+        return add_to_daily_note(formatted_log, subsection="Logs")

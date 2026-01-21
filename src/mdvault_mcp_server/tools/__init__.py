@@ -2,6 +2,7 @@ from .context import register_context_tools
 from .daily import register_daily_tools
 from .list import register_list_tools
 from .macros import register_macro_tools
+from .management import register_management_tools
 from .read import register_read_tools
 from .search import register_search_tools
 from .tasks_projects import register_tasks_projects_tools
@@ -13,6 +14,7 @@ __all__ = [
     "register_daily_tools",
     "register_list_tools",
     "register_macro_tools",
+    "register_management_tools",
     "register_read_tools",
     "register_search_tools",
     "register_tasks_projects_tools",

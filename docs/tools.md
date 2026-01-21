@@ -4,18 +4,19 @@ This document describes all available tools provided by the markdown-vault-mcp s
 
 ## Overview
 
-The server provides tools organized into 8 categories:
+The server provides tools organized into 9 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
 | [List](#list-tools) | 2 | Browse vault structure |
 | [Read](#read-tools) | 3 | Read note content and metadata |
 | [Search](#search-tools) | 2 | Find notes by content |
-| [Update](#update-tools) | 4 | Modify notes and metadata |
+| [Update](#update-tools) | 5 | Modify notes and metadata |
 | [Zettelkasten](#zettelkasten-tools) | 4 | Navigate the knowledge graph |
 | [Context](#context-tools) | 3 | Manage active focus context |
 | [Tasks & Projects](#tasks--projects-tools) | 8 | Manage tasks and projects |
 | [Macros](#macro-tools) | 1 | Run automated workflows |
+| [Management](#management-tools) | 4 | Vault maintenance and status |
 
 ---
 
@@ -298,6 +299,19 @@ Before: - [ ] Review PR comments
 After:  - [x] Review PR comments
 ```
 
+### `capture_content`
+
+Capture content into a configured capture location.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `name` | string | Yes | - | Name of the capture (e.g., 'inbox') |
+| `text` | string | Yes | - | Main content to capture |
+| `extra_vars` | dict | No | - | Additional variables for the capture |
+
+**Returns:** Result of the capture command.
+
 ---
 
 ## Zettelkasten Tools
@@ -568,6 +582,42 @@ Run a predefined macro using the mdv CLI.
 Input: name="daily-standup"
 Output: Macro 'daily-standup' executed successfully.
 ```
+
+---
+
+## Management Tools
+
+Tools for vault maintenance and status.
+
+### `rename_note`
+
+Rename a note and update all references (backlinks) to it.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `source` | string | Yes | - | Source file path |
+| `destination` | string | Yes | - | Destination file path |
+
+**Returns:** Result of the rename operation.
+
+### `validate_vault`
+
+Validate all notes in the vault against their type definitions.
+
+**Returns:** Validation report.
+
+### `list_templates`
+
+List available templates that can be used with create_project/create_task.
+
+**Returns:** List of template names.
+
+### `get_daily_dashboard`
+
+Get the daily dashboard summary (today\'s tasks, events, etc).
+
+**Returns:** The output of 'mdv today'.
 
 ---
 

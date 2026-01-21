@@ -1,7 +1,9 @@
 
 from fastmcp import FastMCP
 
-from .common import run_mdv_command
+from ..config import VAULT_PATH, validate_file
+from .common import append_content_logic, format_log_entry, run_mdv_command
+from .frontmatter import update_note_content
 
 
 def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
@@ -86,6 +88,39 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
                 args.extend(["--var", f"{k}={v}"])
         return run_mdv_command(args)
 
+    @mcp.tool()
+    def log_to_project_note(project_path: str, content: str) -> str:
+        """Append a log entry to the 'Logs' section of a project note.
+
+        Format: - [[YYYY-MM-DD]] - HH:MM: Content
+
+        Args:
+            project_path: Path to the project note relative to vault root.
+            content: The log message to append.
+
+        Returns:
+            Success message or error description.
+        """
+        full_path = VAULT_PATH / project_path
+        result = validate_file(full_path)
+        if not result.ok:
+            return result.msg
+
+        try:
+            formatted_log = format_log_entry(content)
+            
+            def modifier(body: str) -> tuple[str, str]:
+                new_body, created_new = append_content_logic(body, formatted_log, subsection="Logs")
+                if created_new:
+                    msg = f"Created subsection 'Logs' and appended content to {project_path}"
+                else:
+                    msg = f"Appended log to {project_path}"
+                return new_body, msg
+
+            return update_note_content(full_path, modifier)
+        except Exception as e:
+            return f"Error updating project note: {e}"
+
     # --- Tasks ---
 
     @mcp.tool()
@@ -157,3 +192,36 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         if summary:
             args.append(summary)
         return run_mdv_command(args)
+
+    @mcp.tool()
+    def log_to_task_note(task_path: str, content: str) -> str:
+        """Append a log entry to the 'Logs' section of a task note.
+
+        Format: - [[YYYY-MM-DD]] - HH:MM: Content
+
+        Args:
+            task_path: Path to the task note relative to vault root.
+            content: The log message to append.
+
+        Returns:
+            Success message or error description.
+        """
+        full_path = VAULT_PATH / task_path
+        result = validate_file(full_path)
+        if not result.ok:
+            return result.msg
+
+        try:
+            formatted_log = format_log_entry(content)
+            
+            def modifier(body: str) -> tuple[str, str]:
+                new_body, created_new = append_content_logic(body, formatted_log, subsection="Logs")
+                if created_new:
+                    msg = f"Created subsection 'Logs' and appended content to {task_path}"
+                else:
+                    msg = f"Appended log to {task_path}"
+                return new_body, msg
+
+            return update_note_content(full_path, modifier)
+        except Exception as e:
+            return f"Error updating task note: {e}"

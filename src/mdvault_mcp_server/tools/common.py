@@ -2,8 +2,20 @@ import os
 import re
 import shutil
 import subprocess
+from datetime import datetime
 
 from ..config import VAULT_PATH
+
+
+def format_log_entry(content: str) -> str:
+    """
+    Formats a log entry with the standard timestamp format.
+    Format: - [[YYYY-MM-DD]] - HH:MM: Content
+    """
+    now = datetime.now()
+    date_str = now.strftime("%Y-%m-%d")
+    time_str = now.strftime("%H:%M")
+    return f"- [[{date_str}]] - {time_str}: {content}"
 
 
 def run_mdv_command(args: list[str]) -> str:

@@ -8,11 +8,33 @@ from typing import Any
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
-from .common import append_content_logic
+from .common import append_content_logic, run_mdv_command
 from .frontmatter import update_note_content, update_note_metadata
 
 
-def register_update_tools(mcp: FastMCP) -> None:
+def register_update_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
+    @mcp.tool()
+    def capture_content(
+        name: str,
+        text: str,
+        extra_vars: dict[str, str] | None = None,
+    ) -> str:
+        """Capture content into a configured capture location.
+
+        Args:
+            name: Name of the capture (e.g., 'inbox', 'log').
+            text: Main content to capture (passed as 'text' variable).
+            extra_vars: Optional dictionary of additional variables.
+
+        Returns:
+            Result of the capture command.
+        """
+        args = ["capture", name, "--batch", "--var", f"text={text}"]
+        if extra_vars:
+            for k, v in extra_vars.items():
+                args.extend(["--var", f"{k}={v}"])
+        return run_mdv_command(args)
+
     @mcp.tool()
     def update_metadata(note_path: str, metadata_json: str) -> str:
         """Update frontmatter metadata in a note, preserving existing fields.
