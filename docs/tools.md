@@ -14,7 +14,7 @@ The server provides tools organized into 9 categories:
 | [Update](#update-tools) | 5 | Modify notes and metadata |
 | [Zettelkasten](#zettelkasten-tools) | 4 | Navigate the knowledge graph |
 | [Context](#context-tools) | 3 | Manage active focus context |
-| [Tasks & Projects](#tasks--projects-tools) | 8 | Manage tasks and projects |
+| Tasks & Projects | 9 | Manage tasks and projects |
 | [Macros](#macro-tools) | 1 | Run automated workflows |
 | [Management](#management-tools) | 4 | Vault maintenance and status |
 
@@ -471,6 +471,32 @@ List all projects with task counts.
 
 **Returns:** Table of projects with task counts.
 
+### `get_project_info`
+
+Get detailed information about a project (metrics, path, backlinks, last interaction).
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `project_name` | string | Yes | Name or ID of the project |
+
+**Returns:** JSON object with project details.
+
+**Example:**
+```json
+{
+  "title": "MarkdownVault MCP",
+  "path": "Projects/markdownvault-mcp/markdownvault-mcp.md",
+  "metrics": {
+    "tasks_total": 2,
+    "tasks_open": 2,
+    "tasks_done": 0,
+    "backlinks": 5
+  },
+  "last_interaction": "2026-01-23 10:30"
+}
+```
+
 ### `get_project_status`
 
 Show detailed status of a specific project (Kanban view).
@@ -501,7 +527,7 @@ Create a new project.
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `title` | string | Yes | - | Title of the new project |
-| `context` | string | No | - | Project context (e.g. 'work', 'personal') |
+| `context` | string | Yes | - | Project context (e.g. 'work', 'personal') |
 | `status` | string | No | - | Project status (e.g. 'open', 'closed') |
 | `extra_vars` | dict | No | - | Additional variables for the template |
 
