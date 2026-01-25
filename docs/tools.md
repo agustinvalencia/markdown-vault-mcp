@@ -487,6 +487,7 @@ Get detailed information about a project (metrics, path, backlinks, last interac
 {
   "title": "MarkdownVault MCP",
   "path": "Projects/markdownvault-mcp/markdownvault-mcp.md",
+  "description": "An MCP server for Obsidian vaults",
   "metrics": {
     "tasks_total": 2,
     "tasks_open": 2,
@@ -528,6 +529,7 @@ Create a new project.
 |------|------|----------|---------|-------------|
 | `title` | string | Yes | - | Title of the new project |
 | `context` | string | Yes | - | Project context (e.g. 'work', 'personal') |
+| `description` | string | No | - | Optional description (max 1024 chars) |
 | `status` | string | No | - | Project status (e.g. 'open', 'closed') |
 | `extra_vars` | dict | No | - | Additional variables for the template |
 
@@ -564,6 +566,7 @@ Create a new task.
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `title` | string | Yes | - | Title of the task |
+| `description` | string | No | - | Optional description (max 1024 chars) |
 | `project` | string | No | (Active Focus) | Project name |
 | `due_date` | string | No | - | Optional due date (YYYY-MM-DD) |
 | `priority` | string | No | - | Optional priority (e.g. 'low', 'medium', 'high') |

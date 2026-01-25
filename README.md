@@ -1,5 +1,8 @@
 # markdown-vault-mcp
 
+[![CI](https://github.com/agustinvalencia/markdown-vault-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/agustinvalencia/markdown-vault-mcp/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/agustinvalencia/markdown-vault-mcp/graph/badge.svg)](https://codecov.io/gh/agustinvalencia/markdown-vault-mcp)
+
 **Python MCP server for programmatic access to markdown-based knowledge vaults**
 
 A sister project to [mdvault](https://github.com/agustinvalencia/mdvault), providing AI assistants with seamless access to your markdown vault through the [Model Context Protocol](https://modelcontextprotocol.io/).

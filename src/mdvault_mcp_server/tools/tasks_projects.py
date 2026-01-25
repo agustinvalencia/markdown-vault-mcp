@@ -107,7 +107,13 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             pass # Zero backlinks or error
 
         # 3. Analyze content (Tasks & Interaction)
-        content = full_path.read_text(encoding="utf-8")
+        try:
+            metadata, content = parse_note(full_path)
+        except Exception:
+            content = full_path.read_text(encoding="utf-8")
+            metadata = {}
+
+        description = metadata.get("description")
         
         # Count tasks
         tasks_total = len(re.findall(r"^\s*-\s*\[ \]", content, re.MULTILINE)) + \
@@ -132,6 +138,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         result = {
             "title": title,
             "path": path,
+            "description": description,
             "metrics": {
                 "tasks_total": tasks_total,
                 "tasks_open": tasks_open,
@@ -169,6 +176,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     def create_project(
         title: str,
         context: str,
+        description: str | None = None,
         status: str | None = None,
         extra_vars: dict[str, str] | None = None,
     ) -> str:
@@ -177,11 +185,16 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         Args:
             title: Title of the new project.
             context: Project context (e.g. 'work', 'personal').
+            description: Optional description of the project (max 1024 chars).
             status: Project status (e.g. 'open', 'closed').
             extra_vars: Optional dictionary of additional variables for the template.
         """
         args = ["new", "project", title, "--batch"]
         args.extend(["--var", f"context={context}"])
+        if description:
+            if len(description) > 1024:
+                return "Error: Description must be 1024 characters or less."
+            args.extend(["--var", f"description={description}"])
         if status:
             args.extend(["--var", f"status={status}"])
         if extra_vars:
@@ -251,6 +264,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     @mcp.tool()
     def create_task(  # noqa: PLR0913
         title: str,
+        description: str | None = None,
         project: str | None = None,
         due_date: str | None = None,
         priority: str | None = None,
@@ -261,6 +275,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
 
         Args:
             title: Title of the task.
+            description: Optional description of the task (max 1024 chars).
             project: Optional project name. If omitted, uses the active focus context.
             due_date: Optional due date (YYYY-MM-DD).
             priority: Optional priority (e.g. 'low', 'medium', 'high').
@@ -268,6 +283,11 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             extra_vars: Optional dictionary of additional variables for the template.
         """
         args = ["new", "task", title, "--batch"]
+        
+        if description:
+            if len(description) > 1024:
+                return "Error: Description must be 1024 characters or less."
+            args.extend(["--var", f"description={description}"])
         
         # Determine the effective project
         target_project = project
