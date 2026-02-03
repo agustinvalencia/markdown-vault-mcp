@@ -202,6 +202,39 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
                 args.extend(["--var", f"{k}={v}"])
         return run_mdv_command(args)
 
+    # --- Meetings ---
+
+    @mcp.tool()
+    def create_meeting(
+        title: str,
+        attendees: str | None = None,
+        date: str | None = None,
+        extra_vars: dict[str, str] | None = None,
+    ) -> str:
+        """Create a new meeting note.
+
+        Meeting notes have auto-generated IDs (MTG-YYYY-MM-DD-NNN) and are
+        stored in the Meetings/ folder. Creation is logged to the daily note.
+
+        Args:
+            title: Title of the meeting (e.g. "Team Sync", "Design Review").
+            attendees: Who's attending (e.g. "Alice, Bob, Charlie").
+            date: Meeting date in YYYY-MM-DD format. Defaults to today.
+            extra_vars: Optional dictionary of additional variables for the template.
+
+        Returns:
+            Result of the meeting creation including the generated meeting ID.
+        """
+        args = ["new", "meeting", title, "--batch"]
+        if attendees:
+            args.extend(["--var", f"attendees={attendees}"])
+        if date:
+            args.extend(["--var", f"date={date}"])
+        if extra_vars:
+            for k, v in extra_vars.items():
+                args.extend(["--var", f"{k}={v}"])
+        return run_mdv_command(args)
+
     @mcp.tool()
     def log_to_project_note(project_path: str, content: str) -> str:
         """Append a log entry to the 'Logs' section of a project note.
