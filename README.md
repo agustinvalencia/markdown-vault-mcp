@@ -26,6 +26,10 @@ flowchart TB
 - **Search**: Find notes by content with contextual results
 - **Update**: Modify frontmatter, append content, toggle tasks
 - **Navigate**: Explore backlinks, outgoing links, orphans, and related notes
+- **Context**: Get activity summaries for days, weeks, and notes
+- **Focus**: Set and track active project context
+- **Tasks & Projects**: Create tasks, projects, and meetings with auto-generated IDs
+- **Reports**: Generate activity reports and daily dashboards
 
 ## Installation
 
@@ -73,22 +77,20 @@ claude mcp add markdown-vault -- uv run --directory /path/to/markdown-vault-mcp 
 
 ## Available Tools
 
-| Tool | Description |
-|------|-------------|
-| `list_notes` | List markdown notes in a folder |
-| `list_folders` | List subfolders |
-| `read_note` | Read full note content |
-| `read_note_excerpt` | Read note with line limit |
-| `get_metadata` | Get frontmatter as JSON |
-| `search_notes` | Find notes containing text |
-| `search_notes_with_context` | Search with surrounding context |
-| `update_metadata` | Update frontmatter fields |
-| `append_to_note` | Append content to a note |
-| `update_task_status` | Toggle task checkboxes |
-| `find_backlinks` | Find notes linking to a note |
-| `find_outgoing_links` | Find notes a note links to |
-| `find_orphan_notes` | Find notes with no links |
-| `suggest_related_notes` | Suggest notes by shared links |
+**41 tools** organized into 10 categories:
+
+| Category | Key Tools |
+|----------|-----------|
+| **List** | `list_notes`, `list_folders` |
+| **Read** | `read_note`, `read_note_excerpt`, `get_metadata` |
+| **Search** | `search_notes`, `search_notes_with_context` |
+| **Update** | `update_metadata`, `append_to_note`, `update_task_status`, `capture_content` |
+| **Daily** | `add_to_daily_note`, `log_to_daily_note` |
+| **Zettelkasten** | `find_backlinks`, `find_outgoing_links`, `find_orphan_notes`, `suggest_related_notes` |
+| **Context** | `get_active_context`, `get_context_day`, `get_context_week`, `get_context_note`, `get_context_focus` |
+| **Tasks & Projects** | `create_task`, `create_project`, `create_meeting`, `complete_task`, `list_tasks`, `list_projects` |
+| **Macros** | `run_macro` |
+| **Management** | `get_daily_dashboard`, `get_activity_report`, `validate_vault`, `rename_note` |
 
 See [docs/tools.md](docs/tools.md) for detailed documentation of each tool.
 
@@ -147,18 +149,25 @@ uv run ruff format src/
 
 ## Relationship with mdvault
 
+> **Compatibility:** Requires mdvault v0.3.0+
+
 | Feature | mdvault (Rust) | markdown-vault-mcp (Python) |
 |---------|----------------|----------------------------|
 | **Purpose** | Human CLI/TUI interaction | AI assistant integration |
-| **Templates** | Yes | Planned (via mdvault CLI) |
-| **Captures** | Yes | Planned (via mdvault CLI) |
-| **Macros** | Yes | Planned (via mdvault CLI) |
-| **Reading** | Via CLI commands | MCP tools |
+| **Tasks/Projects** | Yes | Yes (via mdvault CLI) |
+| **Meetings** | Yes (v0.3.0+) | Yes (via mdvault CLI) |
+| **Templates** | Yes | Yes (via mdvault CLI) |
+| **Captures** | Yes (Lua) | Yes (via mdvault CLI) |
+| **Macros** | Yes (Lua) | Yes (via mdvault CLI) |
+| **Focus Mode** | Yes | Yes (via mdvault CLI) |
+| **Context Queries** | Yes | Yes (via mdvault CLI) |
+| **Activity Reports** | Yes | Yes (via mdvault CLI) |
+| **Reading** | Via CLI commands | MCP tools + CLI |
 | **Search** | SQLite index | Direct file search |
 | **Link Graph** | SQLite index | Real-time parsing |
-| **Validation** | Type schemas | - |
+| **Validation** | Type schemas | Yes (via mdvault CLI) |
 
-Future versions will integrate with mdvault's template and capture system, allowing AI assistants to create structured notes using your defined templates.
+The MCP server delegates complex operations (tasks, projects, meetings, captures, macros) to the mdvault CLI, ensuring consistent behavior between human and AI interactions.
 
 ## License
 

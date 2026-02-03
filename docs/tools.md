@@ -2,9 +2,11 @@
 
 This document describes all available tools provided by the markdown-vault-mcp server.
 
+> **Compatibility:** This version is compatible with mdvault v0.3.0+
+
 ## Overview
 
-The server provides tools organized into 9 categories:
+The server provides tools organized into 10 categories:
 
 | Category | Tools | Description |
 |----------|-------|-------------|
@@ -12,11 +14,12 @@ The server provides tools organized into 9 categories:
 | [Read](#read-tools) | 3 | Read note content and metadata |
 | [Search](#search-tools) | 2 | Find notes by content |
 | [Update](#update-tools) | 5 | Modify notes and metadata |
+| [Daily](#daily-tools) | 2 | Daily note operations |
 | [Zettelkasten](#zettelkasten-tools) | 4 | Navigate the knowledge graph |
-| [Context](#context-tools) | 3 | Manage active focus context |
-| Tasks & Projects | 9 | Manage tasks and projects |
+| [Context](#context-tools) | 5 | Activity context and focus management |
+| [Tasks & Projects](#tasks--projects-tools) | 12 | Manage tasks, projects, and meetings |
 | [Macros](#macro-tools) | 1 | Run automated workflows |
-| [Management](#management-tools) | 4 | Vault maintenance and status |
+| [Management](#management-tools) | 5 | Vault maintenance, status, and reporting |
 
 ---
 
@@ -256,29 +259,6 @@ Result: Content appended to end of note
 
 ---
 
-### `add_to_daily_note`
-
-Append content to today\'s daily note. Automatically creates the note and directory if they don\'t exist.
-
-**Parameters:**
-| Name | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| `content` | string | Yes | - | Content to append |
-| `subsection` | string | No | - | Optional heading to append under |
-
-**Returns:** Success message or error description.
-
-**Configuration:**
-- Uses `daily_format` from `mcp_config.toml` if present (default: `daily/YYYY-MM-DD.md`).
-
-**Example:**
-```
-Input: content="Finished the API review", subsection="Evening Update"
-Result: Appended content to subsection 'Evening Update' in daily/2026-01-08.md
-```
-
----
-
 ### `update_task_status`
 
 Toggle a markdown task checkbox in a note.
@@ -311,6 +291,54 @@ Capture content into a configured capture location.
 | `extra_vars` | dict | No | - | Additional variables for the capture |
 
 **Returns:** Result of the capture command.
+
+---
+
+## Daily Tools
+
+Tools for managing daily notes.
+
+### `add_to_daily_note`
+
+Append content to today's daily note. Automatically creates the note and directory if they don't exist.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `content` | string | Yes | - | Content to append |
+| `subsection` | string | No | - | Optional heading to append under |
+
+**Returns:** Success message or error description.
+
+**Configuration:**
+- Uses `daily_format` from `mcp_config.toml` if present (default: `daily/YYYY-MM-DD.md`).
+
+**Example:**
+```
+Input: content="Finished the API review", subsection="Evening Update"
+Result: Appended content to subsection 'Evening Update' in daily/2026-01-08.md
+```
+
+---
+
+### `log_to_daily_note`
+
+Append a timestamped log entry to today's daily note.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `content` | string | Yes | The log message to append |
+
+**Returns:** Success message or error description.
+
+**Format:** `- [[YYYY-MM-DD]] - HH:MM: Content`
+
+**Example:**
+```
+Input: content="Started working on OAuth implementation"
+Result: Appended log entry to 'Logs' section in daily/2026-01-08.md
+```
 
 ---
 
@@ -414,21 +442,72 @@ daily/2024-01-10.md (1 shared link)
 
 ## Context Tools
 
-Tools for managing the active project focus.
+Tools for managing focus and retrieving activity context.
 
 ### `get_active_context`
 
-Get the current focus context for the vault.
+Get the current focus context for the vault as JSON.
 
-**Returns:** Information about the currently focused project and note.
+**Returns:** JSON with focused project, note, and timestamp.
 
 **Example:**
+```json
+{
+  "project": "MCP",
+  "note": "Working on OAuth implementation",
+  "started_at": "2026-01-18T10:30:00+01:00"
+}
 ```
-Output:
-Active project: MCP
-Note: Working on OAuth implementation
-Focused since: 2026-01-18T10:30:00+01:00
-```
+
+---
+
+### `get_context_day`
+
+Get activity context for a specific day including tasks, notes modified, and logs.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `date` | string | No | `"today"` | Date in YYYY-MM-DD format, or 'today', 'yesterday' |
+
+**Returns:** JSON with day's activity summary.
+
+---
+
+### `get_context_week`
+
+Get activity context for a specific week.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `week` | string | No | current | Week identifier ('current', 'last', YYYY-Wxx) |
+
+**Returns:** JSON with week's activity summary.
+
+---
+
+### `get_context_note`
+
+Get rich context for a specific note including metadata, sections, activity, and references.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `note_path` | string | Yes | - | Path to note relative to vault root |
+| `activity_days` | integer | No | 7 | Days of activity history to include |
+
+**Returns:** JSON with comprehensive note context.
+
+---
+
+### `get_context_focus`
+
+Get context for the currently focused project including task counts and recent activity.
+
+**Returns:** JSON with focused project details.
+
+---
 
 ### `set_focus`
 
@@ -447,6 +526,8 @@ Set the active project focus.
 Input: project="MCP", note="Implementing new tools"
 Output: Focus set to: MCP
 ```
+
+---
 
 ### `clear_focus`
 
@@ -473,30 +554,14 @@ List all projects with task counts.
 
 ### `get_project_info`
 
-Get detailed information about a project (metrics, path, backlinks, last interaction).
+Get rich context for a project using mdvault's context command. Includes metadata, sections, activity history, and references.
 
 **Parameters:**
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `project_name` | string | Yes | Name or ID of the project |
 
-**Returns:** JSON object with project details.
-
-**Example:**
-```json
-{
-  "title": "MarkdownVault MCP",
-  "path": "Projects/markdownvault-mcp/markdownvault-mcp.md",
-  "description": "An MCP server for Obsidian vaults",
-  "metrics": {
-    "tasks_total": 2,
-    "tasks_open": 2,
-    "tasks_done": 0,
-    "backlinks": 5
-  },
-  "last_interaction": "2026-01-23 10:30"
-}
-```
+**Returns:** JSON object with comprehensive project context (same format as `get_context_note`).
 
 ### `get_project_status`
 
@@ -560,20 +625,42 @@ Show details for a specific task.
 
 ### `create_task`
 
-Create a new task.
+Create a new task. If no project is specified, mdvault automatically uses the active focus context. Context inheritance from the project is handled automatically.
 
 **Parameters:**
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
 | `title` | string | Yes | - | Title of the task |
 | `description` | string | No | - | Optional description (max 1024 chars) |
-| `project` | string | No | (Active Focus) | Project name |
+| `project` | string | No | (Active Focus) | Project name - auto-inherits from focus if omitted |
 | `due_date` | string | No | - | Optional due date (YYYY-MM-DD) |
 | `priority` | string | No | - | Optional priority (e.g. 'low', 'medium', 'high') |
 | `status` | string | No | - | Optional status (e.g. 'todo', 'doing', 'done') |
 | `extra_vars` | dict | No | - | Additional variables for the template |
 
 **Returns:** Result of the creation command.
+
+---
+
+### `create_meeting`
+
+Create a new meeting note. Meeting notes have auto-generated IDs (MTG-YYYY-MM-DD-NNN) and are stored in the Meetings/ folder. Creation is logged to the daily note.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `title` | string | Yes | - | Title of the meeting (e.g. "Team Sync") |
+| `attendees` | string | No | - | Who's attending (e.g. "Alice, Bob") |
+| `date` | string | No | today | Meeting date in YYYY-MM-DD format |
+| `extra_vars` | dict | No | - | Additional variables for the template |
+
+**Returns:** Result including the generated meeting ID.
+
+**Example:**
+```
+Input: title="Design Review", attendees="Alice, Bob"
+Output: Created meeting: Meetings/MTG-2026-02-03-001.md
+```
 
 ### `complete_task`
 
@@ -586,6 +673,38 @@ Mark a task as done.
 | `summary` | string | No | - | Optional completion summary |
 
 **Returns:** Confirmation message.
+
+---
+
+### `log_to_project_note`
+
+Append a timestamped log entry to a project note's 'Logs' section.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `project_path` | string | Yes | Path to project note relative to vault root |
+| `content` | string | Yes | The log message to append |
+
+**Returns:** Success message or error description.
+
+**Format:** `- [[YYYY-MM-DD]] - HH:MM: Content`
+
+---
+
+### `log_to_task_note`
+
+Append a timestamped log entry to a task note's 'Logs' section.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `task_path` | string | Yes | Path to task note relative to vault root |
+| `content` | string | Yes | The log message to append |
+
+**Returns:** Success message or error description.
+
+**Format:** `- [[YYYY-MM-DD]] - HH:MM: Content`
 
 ---
 
@@ -644,9 +763,31 @@ List available templates that can be used with create_project/create_task.
 
 ### `get_daily_dashboard`
 
-Get the daily dashboard summary (today\'s tasks, events, etc).
+Get the daily dashboard summary (today's tasks, events, etc).
 
 **Returns:** The output of 'mdv today'.
+
+---
+
+### `get_activity_report`
+
+Generate an activity report for a specific time period. Shows tasks completed/created, activity heatmap, and productivity metrics.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `month` | string | No* | - | Month in YYYY-MM format (e.g. '2025-01') |
+| `week` | string | No* | - | Week in YYYY-Wxx format (e.g. '2025-W05') |
+
+*Must specify exactly one of `month` or `week`.
+
+**Returns:** Activity report for the specified period.
+
+**Example:**
+```
+Input: month="2026-01"
+Output: Activity report showing tasks, completions, and heatmap for January 2026
+```
 
 ---
 
