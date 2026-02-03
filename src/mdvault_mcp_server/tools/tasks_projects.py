@@ -1,13 +1,11 @@
-
 import json
 import re
-from datetime import datetime
 
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
 from .common import append_content_logic, format_log_entry, run_mdv_command
-from .frontmatter import parse_note, update_note_content
+from .frontmatter import update_note_content
 
 
 def resolve_project_path(project_name: str) -> tuple[str, str] | None:
@@ -84,6 +82,9 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     def get_project_info(project_name: str) -> str:
         """Get detailed information about a project (metrics, path, backlinks, etc.).
 
+        Uses mdvault's context command for rich project information including
+        metadata, sections, activity history, and references.
+
         Args:
             project_name: Name or ID of the project.
         """
@@ -91,64 +92,8 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         if not resolved:
             return f"Project '{project_name}' not found."
 
-        title, path = resolved
-        full_path = VAULT_PATH / path
-        
-        if not full_path.exists():
-             return f"Error: Project file not found at {path}"
-
-        # 2. Get Backlinks
-        links_output = run_mdv_command(["links", path, "--backlinks", "--json"])
-        backlinks_count = 0
-        try:
-            backlinks = json.loads(links_output)
-            backlinks_count = len(backlinks)
-        except json.JSONDecodeError:
-            pass # Zero backlinks or error
-
-        # 3. Analyze content (Tasks & Interaction)
-        try:
-            metadata, content = parse_note(full_path)
-        except Exception:
-            content = full_path.read_text(encoding="utf-8")
-            metadata = {}
-
-        description = metadata.get("description")
-        
-        # Count tasks
-        tasks_total = len(re.findall(r"^\s*-\s*\[ \]", content, re.MULTILINE)) + \
-                      len(re.findall(r"^\s*-\s*\[x\]", content, re.MULTILINE))
-        tasks_open = len(re.findall(r"^\s*-\s*\[ \]", content, re.MULTILINE))
-        tasks_done = tasks_total - tasks_open
-        
-        # Find last interaction (Log entry)
-        # Format: - [[YYYY-MM-DD]] - HH:MM: Content
-        logs = re.findall(r"-\s*\[\[(\d{4}-\d{2}-\d{2})\]\]\s*-\s*(\d{2}:\d{2})", content)
-        last_interaction = "N/A"
-        if logs:
-            logs.sort(key=lambda x: x[0] + x[1])
-            last_date, last_time = logs[-1]
-            last_interaction = f"{last_date} {last_time}"
-        else:
-            # Fallback to mtime
-            mtime = full_path.stat().st_mtime
-            last_interaction = datetime.fromtimestamp(mtime).strftime("%Y-%m-%d %H:%M")
-
-        # 4. Construct Result
-        result = {
-            "title": title,
-            "path": path,
-            "description": description,
-            "metrics": {
-                "tasks_total": tasks_total,
-                "tasks_open": tasks_open,
-                "tasks_done": tasks_done,
-                "backlinks": backlinks_count
-            },
-            "last_interaction": last_interaction
-        }
-        
-        return json.dumps(result, indent=2)
+        _title, path = resolved
+        return run_mdv_command(["context", "note", path, "--format", "json"])
 
     @mcp.tool()
     def get_project_status(project_name: str) -> str:
@@ -306,6 +251,9 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     ) -> str:
         """Create a new task.
 
+        If no project is specified, mdvault automatically uses the active focus
+        context. Context inheritance from the project is handled automatically.
+
         Args:
             title: Title of the task.
             description: Optional description of the task (max 1024 chars).
@@ -316,34 +264,11 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             extra_vars: Optional dictionary of additional variables for the template.
         """
         args = ["new", "task", title, "--batch"]
-        
+
         if description:
             if len(description) > 1024:
                 return "Error: Description must be 1024 characters or less."
             args.extend(["--var", f"description={description}"])
-        
-        # Determine the effective project
-        target_project = project
-        if not target_project:
-            # Check active focus
-            focus_output = run_mdv_command(["focus"])
-            match = re.search(r"Active focus:\s*(.+)", focus_output)
-            if match:
-                target_project = match.group(1).strip()
-        
-        # Inherit context if project is found
-        if target_project:
-            resolved = resolve_project_path(target_project)
-            if resolved:
-                _, path = resolved
-                try:
-                    metadata, _ = parse_note(VAULT_PATH / path)
-                    if "context" in metadata:
-                        args.extend(["--var", f"context={metadata['context']}"])
-                except Exception:
-                    # If we can't read the project note, we just skip context inheritance
-                    pass
-
         if project:
             args.extend(["--var", f"project={project}"])
         if due_date:
@@ -355,6 +280,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         if extra_vars:
             for k, v in extra_vars.items():
                 args.extend(["--var", f"{k}={v}"])
+
         return run_mdv_command(args)
 
     @mcp.tool()
