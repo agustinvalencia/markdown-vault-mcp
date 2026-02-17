@@ -293,7 +293,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         """
         args = ["task", "done", task_path]
         if summary:
-            args.append(summary)
+            args.extend(["-s", summary])
         return run_mdv_command(args)
 
     @mcp.tool()
