@@ -3,8 +3,8 @@ from datetime import date
 from fastmcp import FastMCP
 
 from ..config import DAILY_NOTE_FORMAT, VAULT_PATH
-from .common import append_content_logic, format_log_entry
-from .frontmatter import update_note_content, write_note
+from .common import append_content_logic, format_log_entry, run_mdv_command
+from .frontmatter import update_note_content
 
 
 def _add_to_daily_note_impl(content: str, subsection: str | None = None) -> str:
@@ -21,12 +21,7 @@ def _add_to_daily_note_impl(content: str, subsection: str | None = None) -> str:
 
     try:
         if not filename.exists():
-            # Initialize with a title and metadata
-            title = today.strftime("%Y-%m-%d")
-            initial_content = f"# {title}\n\n"
-            metadata = {"title": title}
-            # write_note adds 'created' and 'updated_at' automatically
-            filename.write_text(write_note(filename, metadata, initial_content), encoding="utf-8")
+            run_mdv_command(["new", "daily", "--batch"])
 
         def modifier(body: str) -> tuple[str, str]:
             new_body, created_new = append_content_logic(body, content, subsection)
@@ -44,7 +39,41 @@ def _add_to_daily_note_impl(content: str, subsection: str | None = None) -> str:
         return f"Error updating daily note: {e}"
 
 
+def _create_daily_note_impl(
+    date: str | None = None,
+    extra_vars: dict[str, str] | None = None,
+) -> str:
+    """Internal implementation of create_daily_note."""
+    args = ["new", "daily", "--batch"]
+    if date:
+        args.extend(["--var", f"date={date}"])
+    if extra_vars:
+        for k, v in extra_vars.items():
+            args.extend(["--var", f"{k}={v}"])
+    return run_mdv_command(args)
+
+
 def register_daily_tools(mcp: FastMCP) -> None:
+    @mcp.tool()
+    def create_daily_note(
+        date: str | None = None,
+        extra_vars: dict[str, str] | None = None,
+    ) -> str:
+        """Create today's daily note from the configured template.
+
+        Uses the vault's daily template to create a fully structured note with
+        all standard frontmatter fields and sections. If the note already exists,
+        returns a message without overwriting.
+
+        Args:
+            date: Optional date in YYYY-MM-DD format. Defaults to today.
+            extra_vars: Optional dictionary of additional template variables.
+
+        Returns:
+            Result of the creation or message if note already exists.
+        """
+        return _create_daily_note_impl(date, extra_vars)
+
     @mcp.tool()
     def add_to_daily_note(content: str, subsection: str | None = None) -> str:
         """Append content to today's daily note.
