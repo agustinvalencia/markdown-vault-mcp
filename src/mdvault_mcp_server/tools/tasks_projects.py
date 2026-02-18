@@ -43,6 +43,32 @@ def resolve_project_path(project_name: str) -> tuple[str, str] | None:
     return None
 
 
+def _create_literature_note_impl(  # noqa: PLR0913
+    title: str,
+    short_title: str,
+    authors: str | None = None,
+    year: int | None = None,
+    url: str | None = None,
+    source_type: str | None = None,
+    extra_vars: dict[str, str] | None = None,
+) -> str:
+    """Internal implementation of create_literature_note."""
+    args = ["new", "literature", title, "--batch"]
+    args.extend(["--var", f"short_title={short_title}"])
+    if authors:
+        args.extend(["--var", f"authors={authors}"])
+    if year is not None:
+        args.extend(["--var", f"year={year}"])
+    if url:
+        args.extend(["--var", f"url={url}"])
+    if source_type:
+        args.extend(["--var", f"source_type={source_type}"])
+    if extra_vars:
+        for k, v in extra_vars.items():
+            args.extend(["--var", f"{k}={v}"])
+    return run_mdv_command(args)
+
+
 def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     # --- Context / Focus ---
 
@@ -179,6 +205,39 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             for k, v in extra_vars.items():
                 args.extend(["--var", f"{k}={v}"])
         return run_mdv_command(args)
+
+    # --- Literature Notes ---
+
+    @mcp.tool()
+    def create_literature_note(  # noqa: PLR0913
+        title: str,
+        short_title: str,
+        authors: str | None = None,
+        year: int | None = None,
+        url: str | None = None,
+        source_type: str | None = None,
+        extra_vars: dict[str, str] | None = None,
+    ) -> str:
+        """Create a new literature note from the template.
+
+        Literature notes are stored in Zettel/Literature/ and track reading
+        progress through multi-pass reading (skimming, reading, completed).
+
+        Args:
+            title: Full title of the paper/book/article.
+            short_title: Short title for the filename slug (e.g. "attention-is-all-you-need").
+            authors: Author names, comma-separated (e.g. "Vaswani, Shazeer, Parmar").
+            year: Year of publication.
+            url: URL or DOI link to the source.
+            source_type: Type of source (article, book, video, podcast, other).
+            extra_vars: Optional dictionary of additional template variables.
+
+        Returns:
+            Result of the creation.
+        """
+        return _create_literature_note_impl(
+            title, short_title, authors, year, url, source_type, extra_vars
+        )
 
     @mcp.tool()
     def log_to_project_note(project_path: str, content: str) -> str:
