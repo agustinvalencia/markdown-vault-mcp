@@ -134,6 +134,40 @@ def register_daily_tools(mcp: FastMCP) -> None:
         return run_mdv_command(args)
 
     @mcp.tool()
+    def create_monthly_report(
+        period: str | None = None,
+        period_start: str | None = None,
+        period_end: str | None = None,
+        extra_vars: dict[str, str] | None = None,
+    ) -> str:
+        """Create a monthly report note from the configured template.
+
+        Creates a structured monthly report in Journal/Monthly/YYYY-MM.md.
+        If the note already exists, returns a message without overwriting.
+
+        Args:
+            period: Reporting period in YYYY-MM format. Defaults to current month.
+            period_start: Optional custom start date (YYYY-MM-DD) for non-calendar periods.
+            period_end: Optional custom end date (YYYY-MM-DD) for non-calendar periods.
+            extra_vars: Optional dictionary of additional template variables.
+
+        Returns:
+            Result of the creation or message if note already exists.
+        """
+        title = f"{period or date.today().strftime('%Y-%m')} Monthly Report"
+        args = ["new", "monthly-report", title, "--batch"]
+        if period:
+            args.extend(["--var", f"period={period}"])
+        if period_start:
+            args.extend(["--var", f"period_start={period_start}"])
+        if period_end:
+            args.extend(["--var", f"period_end={period_end}"])
+        if extra_vars:
+            for k, v in extra_vars.items():
+                args.extend(["--var", f"{k}={v}"])
+        return run_mdv_command(args)
+
+    @mcp.tool()
     def log_to_daily_note(content: str) -> str:
         """Append a log entry to the 'Logs' section of today's daily note.
 
