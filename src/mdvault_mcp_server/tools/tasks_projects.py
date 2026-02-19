@@ -346,6 +346,9 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     def complete_task(task_path: str, summary: str | None = None) -> str:
         """Mark a task as done.
 
+        Sets status to 'done' with a completion timestamp. Logs completion to
+        the parent project note automatically.
+
         Args:
             task_path: Path to the task file relative to vault root.
             summary: Optional summary of what was done (appended to task body).
@@ -353,6 +356,22 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         args = ["task", "done", task_path]
         if summary:
             args.extend(["-s", summary])
+        return run_mdv_command(args)
+
+    @mcp.tool()
+    def cancel_task(task_path: str, reason: str | None = None) -> str:
+        """Cancel a task.
+
+        Sets status to 'cancelled' with a timestamp. Logs cancellation to the
+        parent project note automatically.
+
+        Args:
+            task_path: Path to the task file relative to vault root.
+            reason: Optional reason for cancellation (appended to task body).
+        """
+        args = ["task", "cancel", task_path]
+        if reason:
+            args.extend(["-r", reason])
         return run_mdv_command(args)
 
     @mcp.tool()
