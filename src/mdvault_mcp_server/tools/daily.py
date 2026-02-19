@@ -91,6 +91,49 @@ def register_daily_tools(mcp: FastMCP) -> None:
         return _add_to_daily_note_impl(content, subsection)
 
     @mcp.tool()
+    def add_to_inbox(content: str) -> str:
+        """Quickly capture a thought, idea, or todo to today's daily note inbox.
+
+        Zero friction — just dumps content as a bullet point to the Inbox section.
+        Creates the daily note if it doesn't exist.
+
+        Args:
+            content: The thought, idea, or todo to capture.
+
+        Returns:
+            Success message or error description.
+        """
+        # Format as checkbox item for easy processing later
+        item = f"- [ ] {content}"
+        return _add_to_daily_note_impl(item, subsection="Inbox")
+
+    @mcp.tool()
+    def create_weekly_note(
+        week: str | None = None,
+        extra_vars: dict[str, str] | None = None,
+    ) -> str:
+        """Create a weekly note from the configured template.
+
+        Uses the vault's weekly template to create a structured note.
+        If the note already exists, returns a message without overwriting.
+
+        Args:
+            week: Week identifier in YYYY-WXX format, or a date expression
+                  like 'today', 'today + 1w'. Defaults to current week.
+            extra_vars: Optional dictionary of additional template variables.
+
+        Returns:
+            Result of the creation or message if note already exists.
+        """
+        args = ["new", "weekly", "--batch"]
+        if week:
+            args.append(week)
+        if extra_vars:
+            for k, v in extra_vars.items():
+                args.extend(["--var", f"{k}={v}"])
+        return run_mdv_command(args)
+
+    @mcp.tool()
     def log_to_daily_note(content: str) -> str:
         """Append a log entry to the 'Logs' section of today's daily note.
 
