@@ -2,7 +2,7 @@
 
 This document describes all available tools provided by the markdown-vault-mcp server.
 
-> **Compatibility:** This version is compatible with mdvault v0.3.0+
+> **Compatibility:** This version is compatible with mdvault v0.3.5+
 
 ## Overview
 
@@ -17,7 +17,7 @@ The server provides tools organized into 10 categories:
 | [Daily](#daily-tools) | 2 | Daily note operations |
 | [Zettelkasten](#zettelkasten-tools) | 4 | Navigate the knowledge graph |
 | [Context](#context-tools) | 5 | Activity context and focus management |
-| [Tasks & Projects](#tasks--projects-tools) | 12 | Manage tasks, projects, and meetings |
+| [Tasks & Projects](#tasks--projects-tools) | 13 | Manage tasks, projects, and meetings |
 | [Macros](#macro-tools) | 1 | Run automated workflows |
 | [Management](#management-tools) | 5 | Vault maintenance, status, and reporting |
 
@@ -673,6 +673,44 @@ Mark a task as done.
 | `summary` | string | No | - | Optional completion summary |
 
 **Returns:** Confirmation message.
+
+---
+
+### `cancel_task`
+
+Cancel a task.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `task_path` | string | Yes | - | Path to task file |
+| `reason` | string | No | - | Optional cancellation reason |
+
+**Returns:** Confirmation message.
+
+---
+
+### `archive_project`
+
+Archive a completed project. Moves project and tasks to `Projects/_archive/`, cancels open tasks, clears focus if set, and logs the event.
+
+Only projects with `status: done` can be archived.
+
+**Parameters:**
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `project_name` | string | Yes | The project ID or folder name to archive |
+
+**Returns:** Result of the archive operation.
+
+**Example:**
+```
+Input: project_name="MCP"
+Output: OK   mdv project archive
+  Archived project: My Cool Project
+  - 2 open tasks cancelled
+  - Files moved to Projects/_archive/my-cool-project/
+```
 
 ---
 

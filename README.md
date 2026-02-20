@@ -77,7 +77,7 @@ claude mcp add markdown-vault -- uv run --directory /path/to/markdown-vault-mcp 
 
 ## Available Tools
 
-**41 tools** organized into 10 categories:
+**42 tools** organized into 10 categories:
 
 | Category | Key Tools |
 |----------|-----------|
@@ -88,7 +88,7 @@ claude mcp add markdown-vault -- uv run --directory /path/to/markdown-vault-mcp 
 | **Daily** | `add_to_daily_note`, `log_to_daily_note` |
 | **Zettelkasten** | `find_backlinks`, `find_outgoing_links`, `find_orphan_notes`, `suggest_related_notes` |
 | **Context** | `get_active_context`, `get_context_day`, `get_context_week`, `get_context_note`, `get_context_focus` |
-| **Tasks & Projects** | `create_task`, `create_project`, `create_meeting`, `complete_task`, `list_tasks`, `list_projects` |
+| **Tasks & Projects** | `create_task`, `create_project`, `create_meeting`, `complete_task`, `archive_project`, `list_tasks`, `list_projects` |
 | **Macros** | `run_macro` |
 | **Management** | `get_daily_dashboard`, `get_activity_report`, `validate_vault`, `rename_note` |
 
@@ -149,7 +149,7 @@ uv run ruff format src/
 
 ## Relationship with mdvault
 
-> **Compatibility:** Requires mdvault v0.3.0+
+> **Compatibility:** Requires mdvault v0.3.5+
 
 | Feature | mdvault (Rust) | markdown-vault-mcp (Python) |
 |---------|----------------|----------------------------|
