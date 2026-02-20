@@ -21,6 +21,10 @@ def create_server() -> FastMCP:
     Returns:
         Configured FastMCP server instance
     """
+    from .config import require_vault_path
+
+    require_vault_path()  # Fail fast if vault not configured
+
     mcp = FastMCP("Markdown Vault")
 
     # Register all tool groups

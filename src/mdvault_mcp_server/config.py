@@ -29,7 +29,17 @@ MARKDOWN_VAULT_PATH = os.getenv("MARKDOWN_VAULT_PATH") or _config.get("vault_pat
 if MARKDOWN_VAULT_PATH:
     VAULT_PATH = Path(MARKDOWN_VAULT_PATH)
 else:
-    raise ValueError("MARKDOWN_VAULT_PATH environment variable is not set and 'vault_path' not found in mcp_config.toml")
+    VAULT_PATH = None  # type: ignore[assignment]
+
+
+def require_vault_path() -> Path:
+    """Return VAULT_PATH or raise if not configured. Use at runtime, not import time."""
+    if VAULT_PATH is None:
+        raise ValueError(
+            "MARKDOWN_VAULT_PATH environment variable is not set "
+            "and 'vault_path' not found in mcp_config.toml"
+        )
+    return VAULT_PATH
 
 DAILY_NOTE_FORMAT = _config.get("daily_format", DEFAULT_DAILY_FORMAT)
 
@@ -49,7 +59,8 @@ def validate_path(path: Path) -> Result:
         Result object with ok=True and a valid path if it is valid or ok=False and an error message if the path is not valid
     """
     try:
-        if not path.resolve().is_relative_to(VAULT_PATH.resolve()):
+        vault = require_vault_path()
+        if not path.resolve().is_relative_to(vault.resolve()):
             res = f"Invalid path, must be within vault: {path!s}"
             return Result(False, res)
 
