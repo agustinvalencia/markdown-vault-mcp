@@ -7,6 +7,7 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file, validate_path
+from .common import run_mdv_command
 
 # Regex patterns for link extraction
 WIKILINK_PATTERN = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
@@ -282,3 +283,79 @@ def register_zettelkasten_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             return "\n".join(result_lines)
         except Exception as e:
             return f"Error analyzing note: {e}"
+
+    @mcp.tool()
+    def create_zettel(
+        title: str,
+        short_title: str,
+        source: str | None = None,
+        body: str | None = None,
+        connections: list[str] | None = None,
+        extra_vars: dict[str, str] | None = None,
+    ) -> str:
+        """Create a new zettel (atomic knowledge note).
+
+        Zettels are stored in the Zettel/ directory (or as configured by the
+        vault's type definition). Each zettel captures a single atomic insight.
+
+        Args:
+            title: Title of the zettel (the atomic insight).
+            short_title: Short slug for the filename (e.g. "attention-mechanism").
+            source: Optional source reference as a wikilink (e.g. "[[literature-note]]").
+            body: Optional body text elaborating on the insight.
+            connections: Optional list of related note wikilinks (e.g. ["[[note-1]]", "[[note-2]]"]).
+            extra_vars: Optional dictionary of additional template variables.
+
+        Returns:
+            Result of the creation including the file path.
+        """
+        args = ["new", "zettel", title, "--batch"]
+        args.extend(["--var", f"short_title={short_title}"])
+        if source:
+            args.extend(["--var", f"source={source}"])
+        if extra_vars:
+            for k, v in extra_vars.items():
+                args.extend(["--var", f"{k}={v}"])
+
+        result = run_mdv_command(args)
+
+        # If body or connections provided, append them to the created note
+        if body or connections:
+            # Extract the file path from the result
+            # Result format typically includes the path
+            created_path = None
+            for line in result.splitlines():
+                line_stripped = line.strip()
+                if line_stripped.endswith(".md"):
+                    # Try to find a path-like string
+                    for word in line_stripped.split():
+                        if word.endswith(".md"):
+                            candidate = VAULT_PATH / word
+                            if candidate.exists():
+                                created_path = candidate
+                                break
+                    if created_path:
+                        break
+
+            if created_path and created_path.exists():
+                try:
+                    content = created_path.read_text(encoding="utf-8")
+                    additions = []
+
+                    if body:
+                        additions.append(f"\n## Core Idea\n\n{body}\n")
+
+                    if connections:
+                        links_text = "\n".join(f"- {conn}" for conn in connections)
+                        additions.append(f"\n## Connections\n\n{links_text}\n")
+
+                    if source and f"[[{source.strip('[]')}]]" not in content:
+                        additions.append(f"\n## Source\n\n- {source}\n")
+
+                    if additions:
+                        content += "\n".join(additions)
+                        created_path.write_text(content, encoding="utf-8")
+                except Exception as e:
+                    result += f"\n(Warning: created note but failed to append body/connections: {e})"
+
+        return result
