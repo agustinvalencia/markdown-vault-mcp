@@ -1,14 +1,3 @@
-from .context import register_context_tools
-from .daily import register_daily_tools
-from .list import register_list_tools
-from .macros import register_macro_tools
-from .management import register_management_tools
-from .read import register_read_tools
-from .search import register_search_tools
-from .tasks_projects import register_tasks_projects_tools
-from .update import register_update_tools
-from .zettelkasten import register_zettelkasten_tools
-
 __all__ = [
     "register_context_tools",
     "register_daily_tools",
@@ -21,3 +10,25 @@ __all__ = [
     "register_update_tools",
     "register_zettelkasten_tools",
 ]
+
+_IMPORTS = {
+    "register_context_tools": ".context",
+    "register_daily_tools": ".daily",
+    "register_list_tools": ".list",
+    "register_macro_tools": ".macros",
+    "register_management_tools": ".management",
+    "register_read_tools": ".read",
+    "register_search_tools": ".search",
+    "register_tasks_projects_tools": ".tasks_projects",
+    "register_update_tools": ".update",
+    "register_zettelkasten_tools": ".zettelkasten",
+}
+
+
+def __getattr__(name: str):
+    if name in _IMPORTS:
+        import importlib
+
+        module = importlib.import_module(_IMPORTS[name], __package__)
+        return getattr(module, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
