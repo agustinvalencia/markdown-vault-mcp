@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 # Default configuration
-DEFAULT_DAILY_FORMAT = "daily/%Y-%m-%d.md"
+DEFAULT_DAILY_FORMAT = "Journal/%Y/Daily/%Y-%m-%d.md"
 
 def load_config() -> dict[str, str]:
     config_path = Path(os.path.expanduser("~/.config/mdvault/mcp_config.toml"))

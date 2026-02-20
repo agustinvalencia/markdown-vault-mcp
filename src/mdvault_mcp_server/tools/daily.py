@@ -79,7 +79,7 @@ def register_daily_tools(mcp: FastMCP) -> None:
         """Append content to today's daily note.
 
         Creates the daily note and its parent directories if they don't exist.
-        The note path matches the configured 'daily_format' (default: 'daily/YYYY-MM-DD.md').
+        The note path matches the configured 'daily_format' (default: 'Journal/YYYY/Daily/YYYY-MM-DD.md').
 
         Args:
             content: Content to append
@@ -142,7 +142,7 @@ def register_daily_tools(mcp: FastMCP) -> None:
     ) -> str:
         """Create a monthly report note from the configured template.
 
-        Creates a structured monthly report in Journal/Monthly/YYYY-MM.md.
+        Creates a structured monthly report in Journal/YYYY/Monthly/YYYY-MM.md.
         If the note already exists, returns a message without overwriting.
 
         Args:
