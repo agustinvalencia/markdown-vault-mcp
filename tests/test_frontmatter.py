@@ -23,7 +23,7 @@ def test_update_metadata_datetime_serialization(tmp_path):
     """
     Test that updating metadata with a datetime string results in 
     an unquoted timestamp in the YAML frontmatter.
-    Ref: https://github.com/eaguval/markdown-vault-mcp/issues/10 (mocked issue ref)
+    Ref: https://github.com/agustinvalencia/markdown-vault-mcp/issues/10
     """
     # Create a dummy note
     note_path = tmp_path / "test_note.md"
