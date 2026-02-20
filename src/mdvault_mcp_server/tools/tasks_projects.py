@@ -240,6 +240,19 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         )
 
     @mcp.tool()
+    def archive_project(project_name: str) -> str:
+        """Archive a completed project.
+
+        Moves project and tasks to Projects/_archive/, cancels open tasks,
+        clears focus if set, and logs the event.
+        Only projects with status 'done' can be archived.
+
+        Args:
+            project_name: The project ID or folder name to archive.
+        """
+        return run_mdv_command(["project", "archive", project_name, "--yes"])
+
+    @mcp.tool()
     def log_to_project_note(project_path: str, content: str) -> str:
         """Append a log entry to the 'Logs' section of a project note.
 
