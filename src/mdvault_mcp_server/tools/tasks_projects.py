@@ -253,37 +253,37 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         return run_mdv_command(["project", "archive", project_name, "--yes"])
 
     @mcp.tool()
-    def log_to_project_note(project_path: str, content: str) -> str:
-        """Append a log entry to the 'Logs' section of a project note.
+    def log_to_note(note_path: str, content: str) -> str:
+        """Append a log entry to the 'Logs' section of any note (project, task, etc.).
 
         Format: - [[YYYY-MM-DD]] - HH:MM: Content
 
         Args:
-            project_path: Path to the project note relative to vault root.
+            note_path: Path to the note relative to vault root.
             content: The log message to append.
 
         Returns:
             Success message or error description.
         """
-        full_path = VAULT_PATH / project_path
+        full_path = VAULT_PATH / note_path
         result = validate_file(full_path)
         if not result.ok:
             return result.msg
 
         try:
             formatted_log = format_log_entry(content)
-            
+
             def modifier(body: str) -> tuple[str, str]:
                 new_body, created_new = append_content_logic(body, formatted_log, subsection="Logs")
                 if created_new:
-                    msg = f"Created subsection 'Logs' and appended content to {project_path}"
+                    msg = f"Created subsection 'Logs' and appended content to {note_path}"
                 else:
-                    msg = f"Appended log to {project_path}"
+                    msg = f"Appended log to {note_path}"
                 return new_body, msg
 
             return update_note_content(full_path, modifier)
         except Exception as e:
-            return f"Error updating project note: {e}"
+            return f"Error updating note: {e}"
 
     # --- Tasks ---
 
@@ -387,35 +387,3 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             args.extend(["-r", reason])
         return run_mdv_command(args)
 
-    @mcp.tool()
-    def log_to_task_note(task_path: str, content: str) -> str:
-        """Append a log entry to the 'Logs' section of a task note.
-
-        Format: - [[YYYY-MM-DD]] - HH:MM: Content
-
-        Args:
-            task_path: Path to the task note relative to vault root.
-            content: The log message to append.
-
-        Returns:
-            Success message or error description.
-        """
-        full_path = VAULT_PATH / task_path
-        result = validate_file(full_path)
-        if not result.ok:
-            return result.msg
-
-        try:
-            formatted_log = format_log_entry(content)
-            
-            def modifier(body: str) -> tuple[str, str]:
-                new_body, created_new = append_content_logic(body, formatted_log, subsection="Logs")
-                if created_new:
-                    msg = f"Created subsection 'Logs' and appended content to {task_path}"
-                else:
-                    msg = f"Appended log to {task_path}"
-                return new_body, msg
-
-            return update_note_content(full_path, modifier)
-        except Exception as e:
-            return f"Error updating task note: {e}"

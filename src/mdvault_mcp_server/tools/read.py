@@ -11,19 +11,17 @@ from .frontmatter import parse_note
 
 def register_read_tools(mcp: FastMCP) -> None:
     @mcp.tool()
-    def read_note(note_path: str) -> str:
-        full_path = VAULT_PATH / note_path
-        result = validate_file(full_path)
-        if not result.ok:
-            return result.msg
+    def read_note(note_path: str, max_lines: int | None = None) -> str:
+        """Read a note from the vault.
 
-        try:
-            return full_path.read_text(encoding="utf-8")
-        except Exception as e:
-            return f"Error reading {full_path} : {e!s}"
+        Args:
+            note_path: Path to the note relative to vault root
+            max_lines: Optional maximum number of lines to return.
+                       If omitted, returns the full note.
 
-    @mcp.tool()
-    def read_note_excerpt(note_path: str, max_lines: int = 50) -> str:
+        Returns:
+            Note content (possibly truncated) or error description
+        """
         full_path = VAULT_PATH / note_path
         result = validate_file(full_path)
         if not result.ok:
@@ -31,13 +29,15 @@ def register_read_tools(mcp: FastMCP) -> None:
 
         try:
             content = full_path.read_text(encoding="utf-8")
+            if max_lines is None:
+                return content
             lines = content.splitlines()
             if len(lines) <= max_lines:
                 return content
             excerpt = "\n".join(lines[:max_lines])
             return f"{excerpt}\n\n({len(lines) - max_lines} more lines)"
         except Exception as e:
-            return f"Error reading note : {e!s}"
+            return f"Error reading note: {e!s}"
 
     @mcp.tool()
     def get_metadata(note_path: str) -> str:

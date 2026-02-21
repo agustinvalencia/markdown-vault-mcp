@@ -5,15 +5,6 @@ from .common import run_mdv_command
 
 def register_context_tools(mcp: FastMCP) -> None:
     @mcp.tool()
-    def get_active_context() -> str:
-        """Get the current focus context for the vault.
-
-        Returns the active project and any associated note.
-        Use this to understand what the user is currently working on.
-        """
-        return run_mdv_command(["focus", "--json"])
-
-    @mcp.tool()
     def get_context_day(date: str = "today") -> str:
         """Get activity context for a specific day including tasks, notes modified, and logs.
 
