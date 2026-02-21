@@ -16,7 +16,14 @@ def register_context_tools(mcp: FastMCP) -> None:
 
     @mcp.tool()
     def get_context_week(week: str | None = None) -> str:
-        """Get activity context for a specific week.
+        """Get task-centric activity context for a specific week.
+
+        Returns individual task lists (in-progress, completed, created),
+        per-day focus breakdown, and project log entries. Use this to
+        understand what happened at the task level during a week.
+
+        For aggregate metrics (heatmap, coverage, top completed counts),
+        use get_activity_report with a week parameter instead.
 
         Args:
             week: Week identifier ('current', 'last', YYYY-Wxx), or None for current.

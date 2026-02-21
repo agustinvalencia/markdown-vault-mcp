@@ -18,10 +18,15 @@ def register_management_tools(mcp: FastMCP) -> None:
         month: str | None = None,
         week: str | None = None,
     ) -> str:
-        """Generate an activity report for a specific time period.
+        """Generate a metrics-centric activity report for a time period.
 
-        Provides a summary of tasks completed/created, activity heatmap,
-        and other productivity metrics.
+        Returns aggregate productivity metrics: activity heatmap, daily
+        note coverage, top completed tasks, and project activity counts.
+        Supports both weekly and monthly periods (context week does not
+        support monthly).
+
+        For task-level detail (individual task lists, in-progress tracking,
+        per-day focus), use get_context_week instead.
 
         Args:
             month: Month in YYYY-MM format (e.g. '2025-01' for January 2025).
