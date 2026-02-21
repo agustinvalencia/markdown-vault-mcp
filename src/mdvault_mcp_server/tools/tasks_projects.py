@@ -105,11 +105,11 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         return run_mdv_command(args)
 
     @mcp.tool()
-    def get_project_info(project_name: str) -> str:
-        """Get detailed information about a project (metrics, path, backlinks, etc.).
+    def get_project_context(project_name: str) -> str:
+        """Get rich context for a project: metadata, sections, tasks, activity, and references.
 
-        Uses mdvault's context command for rich project information including
-        metadata, sections, activity history, and references.
+        Returns the full context note output for the project, including
+        recent task activity, backlinks, and outgoing links.
 
         Args:
             project_name: Name or ID of the project.
