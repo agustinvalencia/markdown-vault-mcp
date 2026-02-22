@@ -93,15 +93,21 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     # --- Projects ---
 
     @mcp.tool()
-    def list_projects(status_filter: str | None = None) -> str:
+    def list_projects(
+        status_filter: str | None = None,
+        kind_filter: str | None = None,
+    ) -> str:
         """List all projects with task counts.
 
         Args:
             status_filter: Filter projects by status (e.g., 'active', 'archived').
+            kind_filter: Filter by kind ('project' or 'area').
         """
         args = ["project", "list"]
         if status_filter:
             args.extend(["--status", status_filter])
+        if kind_filter:
+            args.extend(["--kind", kind_filter])
         return run_mdv_command(args)
 
     @mcp.tool()
@@ -149,19 +155,22 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         context: str,
         description: str | None = None,
         status: str | None = None,
+        kind: str = "project",
         extra_vars: dict[str, str] | None = None,
     ) -> str:
-        """Create a new project.
+        """Create a new project or area.
 
         Args:
-            title: Title of the new project.
+            title: Title of the new project or area.
             context: Project context (e.g. 'work', 'personal').
             description: Optional description of the project (max 1024 chars).
             status: Project status (e.g. 'open', 'closed').
+            kind: Either 'project' (finite goal, default) or 'area' (ongoing responsibility).
             extra_vars: Optional dictionary of additional variables for the template.
         """
         args = ["new", "project", title, "--batch"]
         args.extend(["--var", f"context={context}"])
+        args.extend(["--var", f"kind={kind}"])
         if description:
             if len(description) > 1024:
                 return "Error: Description must be 1024 characters or less."
@@ -246,6 +255,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         Moves project and tasks to Projects/_archive/, cancels open tasks,
         clears focus if set, and logs the event.
         Only projects with status 'done' can be archived.
+        Areas (kind: area) cannot be archived — they are ongoing.
 
         Args:
             project_name: The project ID or folder name to archive.
