@@ -8,6 +8,17 @@ from fastmcp import FastMCP
 from ..config import VAULT_PATH, validate_path
 
 
+def _has_content(directory: Path) -> bool:
+    """Check whether a directory contains any non-hidden files (recursively)."""
+    try:
+        return any(
+            not part.startswith(".") for f in directory.rglob("*") if f.is_file()
+            for part in f.relative_to(directory).parts
+        )
+    except OSError:
+        return False
+
+
 def validated_path(folder: str) -> tuple[bool, str]:
     search_path = VAULT_PATH / folder if folder else VAULT_PATH
     if not search_path.exists():
@@ -44,7 +55,9 @@ def register_list_tools(mcp: FastMCP) -> None:
         folders: list[str] = []
         for item in search_path.iterdir():
             if item.is_dir() and not item.name.startswith("."):
-                relative_path = item.relative_to(VAULT_PATH)
-                folders.append(str(relative_path))
+                # Skip empty directories — they are likely stale legacy paths
+                if _has_content(item):
+                    relative_path = item.relative_to(VAULT_PATH)
+                    folders.append(str(relative_path))
 
         return "\n".join(sorted(folders)) if folders else "No folders found"
