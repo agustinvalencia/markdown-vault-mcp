@@ -83,12 +83,10 @@ def append_content_logic(existing: str, content: str, subsection: str | None) ->
 
     content_to_insert = content
 
-    # Prefix spacing
-    if not prefix.endswith("\n\n"):
-        if prefix.endswith("\n"):
-            content_to_insert = "\n" + content_to_insert
-        else:
-            content_to_insert = "\n\n" + content_to_insert
+    # Prefix spacing: ensure content starts on a new line, but don't add
+    # a blank line between consecutive entries in the same section.
+    if not prefix.endswith("\n"):
+        content_to_insert = "\n" + content_to_insert
 
     # Suffix spacing
     if suffix:
