@@ -21,9 +21,10 @@ def create_server() -> FastMCP:
     Returns:
         Configured FastMCP server instance
     """
-    from .config import require_vault_path
+    from .config import check_mdv_version, require_vault_path
 
     require_vault_path()  # Fail fast if vault not configured
+    check_mdv_version()  # Warn if mdv CLI is missing or outdated
 
     mcp = FastMCP("Markdown Vault")
 

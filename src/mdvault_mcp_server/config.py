@@ -1,4 +1,8 @@
+import logging
 import os
+import re
+import shutil
+import subprocess
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -42,6 +46,67 @@ def require_vault_path() -> Path:
     return VAULT_PATH
 
 DAILY_NOTE_FORMAT = _config.get("daily_format", DEFAULT_DAILY_FORMAT)
+
+# Minimum mdv CLI version required for full functionality
+MIN_MDV_VERSION = "0.4.0"
+
+logger = logging.getLogger(__name__)
+
+
+def _parse_version(version_str: str) -> tuple[int, ...]:
+    """Parse a semver-like version string into a tuple of ints."""
+    match = re.search(r"(\d+(?:\.\d+)*)", version_str)
+    if not match:
+        raise ValueError(f"Could not parse version from: {version_str!r}")
+    return tuple(int(part) for part in match.group(1).split("."))
+
+
+def check_mdv_version() -> None:
+    """Check that the mdv CLI binary is installed and meets the minimum version.
+
+    Logs a warning if mdv is not found or is too old. Never raises.
+    """
+    try:
+        mdv_path = shutil.which("mdv")
+        if not mdv_path:
+            logger.warning(
+                "mdv CLI not found in PATH. Some tools will not work. "
+                "Install mdvault: https://github.com/agustinvalencia/mdvault"
+            )
+            return
+
+        result = subprocess.run(
+            [mdv_path, "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+
+        if result.returncode != 0:
+            logger.warning(
+                "mdv --version returned non-zero exit code (%d). "
+                "Cannot verify CLI version.",
+                result.returncode,
+            )
+            return
+
+        version_output = result.stdout.strip()
+        installed = _parse_version(version_output)
+        minimum = _parse_version(MIN_MDV_VERSION)
+
+        if installed < minimum:
+            logger.warning(
+                "mdv version %s is older than the minimum required %s. "
+                "Please upgrade mdvault.",
+                version_output,
+                MIN_MDV_VERSION,
+            )
+        else:
+            logger.info("mdv CLI version %s found (minimum: %s)", version_output, MIN_MDV_VERSION)
+
+    except Exception as e:
+        logger.warning("Failed to check mdv version: %s", e)
 
 @dataclass
 class Result:
