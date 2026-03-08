@@ -23,7 +23,8 @@ def register_management_tools(mcp: FastMCP) -> None:
         """Generate a metrics-centric activity report for a time period.
 
         Returns aggregate productivity metrics: activity heatmap, daily
-        note coverage, top completed tasks, and project activity counts.
+        note coverage, project progress stats, and actionable sections
+        (overdue tasks, upcoming deadlines, high priority, stale notes).
         Supports both weekly and monthly periods (context week does not
         support monthly).
 
@@ -60,7 +61,8 @@ def register_management_tools(mcp: FastMCP) -> None:
 
         Returns a JSON report containing vault summary (notes/tasks by type and
         status), per-project breakdowns (task counts, progress %, velocity,
-        recent completions), and daily activity data. Use for rich status
+        recent completions), daily activity data, and actionable task lists
+        (overdue, high_priority, upcoming_deadlines). Use for rich status
         checks, project reviews, and weekly/monthly reporting.
 
         Args:
