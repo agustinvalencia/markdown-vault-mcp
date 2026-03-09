@@ -238,6 +238,9 @@ def register_zettelkasten_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
                         content += "\n".join(additions)
                         created_path.write_text(content, encoding="utf-8")
                 except Exception as e:
-                    result += f"\n(Warning: created note but failed to append body/connections: {e})"
+                    result += (
+                        "\n(Warning: failed to append"
+                        f" body/connections: {e})"
+                    )
 
         return result
