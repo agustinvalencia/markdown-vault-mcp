@@ -2,19 +2,32 @@ import os
 import re
 import shutil
 import subprocess
-from datetime import datetime
+from datetime import date, datetime
 
 from ..config import VAULT_PATH
 
 
-def format_log_entry(content: str) -> str:
+def format_log_entry(content: str, target_date: date | str | None = None) -> str:
     """
-    Formats a log entry with the standard timestamp format.
-    Format: - [[YYYY-MM-DD]] - HH:MM: Content
+    Formats a log entry with a timestamp.
+
+    If *target_date* is today (or None and the caller doesn't know the
+    target), the behaviour differs:
+      - target_date == today  → short format:  ``- **HH:MM**: Content``
+      - target_date is None or a different date → long format with date
+        link: ``- [[YYYY-MM-DD]] - HH:MM: Content``
     """
     now = datetime.now()
-    date_str = now.strftime("%Y-%m-%d")
     time_str = now.strftime("%H:%M")
+
+    # Normalise target_date to a date object (if provided as str)
+    if isinstance(target_date, str):
+        target_date = date.fromisoformat(target_date)
+
+    if target_date is not None and target_date == date.today():
+        return f"- **{time_str}**: {content}"
+
+    date_str = now.strftime("%Y-%m-%d")
     return f"- [[{date_str}]] - {time_str}: {content}"
 
 
