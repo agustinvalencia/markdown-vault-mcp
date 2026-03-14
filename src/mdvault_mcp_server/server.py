@@ -3,6 +3,7 @@ from fastmcp import FastMCP
 from .tools import (
     register_context_tools,
     register_daily_tools,
+    register_lint_tools,
     register_list_tools,
     register_macro_tools,
     register_management_tools,
@@ -39,5 +40,6 @@ def create_server() -> FastMCP:
     register_context_tools(mcp)
     register_tasks_projects_tools(mcp)
     register_management_tools(mcp)
+    register_lint_tools(mcp)
 
     return mcp
