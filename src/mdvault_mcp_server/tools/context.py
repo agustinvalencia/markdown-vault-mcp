@@ -1,6 +1,45 @@
+import json
+
 from fastmcp import FastMCP
 
 from .common import run_mdv_command
+
+MAX_CONTEXT_CHARS = 8000
+MAX_LIST_ITEMS = 15
+
+
+def _truncate_context_day(raw: str) -> str:
+    """Truncate oversized context day responses to fit within token budgets."""
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return raw
+
+    # Truncate activity log entries
+    if "activity" in data and isinstance(data["activity"], list):
+        original_len = len(data["activity"])
+        data["activity"] = data["activity"][:MAX_LIST_ITEMS]
+        if original_len > MAX_LIST_ITEMS:
+            data["activity"].append(
+                {"note": f"... and {original_len - MAX_LIST_ITEMS} more entries (truncated)"}
+            )
+
+    # Truncate modified_notes list
+    if "modified_notes" in data and isinstance(data["modified_notes"], list):
+        original_len = len(data["modified_notes"])
+        data["modified_notes"] = data["modified_notes"][:MAX_LIST_ITEMS]
+        if original_len > MAX_LIST_ITEMS:
+            data["modified_notes"].append(
+                f"... and {original_len - MAX_LIST_ITEMS} more (truncated)"
+            )
+
+    result = json.dumps(data, indent=2)
+
+    # Final safety net: hard truncate if still too large
+    if len(result) > MAX_CONTEXT_CHARS:
+        return result[:MAX_CONTEXT_CHARS] + "\n... (response truncated)"
+
+    return result
 
 
 def register_context_tools(mcp: FastMCP) -> None:
@@ -12,7 +51,8 @@ def register_context_tools(mcp: FastMCP) -> None:
             date: Date in YYYY-MM-DD format, or 'today', 'yesterday', or date expression.
         """
         args = ["context", "day", date, "--format", "json"]
-        return run_mdv_command(args)
+        raw = run_mdv_command(args)
+        return _truncate_context_day(raw)
 
     @mcp.tool()
     def get_context_week(week: str | None = None) -> str:
