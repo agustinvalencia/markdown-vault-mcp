@@ -1,8 +1,17 @@
 """Tests for task ID resolution in complete_task and cancel_task."""
 
-from unittest.mock import patch
+from unittest.mock import call, patch
 
-from mdvault_mcp_server.tools.tasks_projects import _resolve_task_path
+from fastmcp import FastMCP
+
+from mdvault_mcp_server.tools.tasks_projects import _resolve_task_path, register_tasks_projects_tools
+
+
+def _get_tool(name: str):
+    """Register tools and return a specific tool function."""
+    mcp = FastMCP("test")
+    register_tasks_projects_tools(mcp)
+    return mcp._tool_manager._tools[name].fn
 
 
 class TestResolveTaskPath:
@@ -52,3 +61,69 @@ class TestResolveTaskPath:
         ):
             result = _resolve_task_path("X-001")
         assert result == "tasks/X-001.md"
+
+
+class TestCompleteTaskWithId:
+    def test_complete_task_resolves_id(self):
+        """complete_task should resolve task IDs before calling mdv task done."""
+        tool = _get_tool("complete_task")
+        status_output = (
+            "Task: Fix bug [BUG-001]\n"
+            "  Path:         Projects/dev/Tasks/BUG-001-fix-bug.md"
+        )
+        with patch(
+            "mdvault_mcp_server.tools.tasks_projects.run_mdv_command",
+        ) as mock_run:
+            mock_run.side_effect = [
+                status_output,  # First call: task status for resolution
+                "OK   mdv task done",  # Second call: task done
+            ]
+            result = tool(task_path="BUG-001", summary="Fixed it")
+
+        assert mock_run.call_count == 2
+        mock_run.assert_any_call(["task", "status", "BUG-001"])
+        mock_run.assert_any_call(
+            ["task", "done", "Projects/dev/Tasks/BUG-001-fix-bug.md", "-s", "Fixed it"]
+        )
+
+    def test_complete_task_with_path_skips_resolution(self):
+        """complete_task with a file path should not call task status."""
+        tool = _get_tool("complete_task")
+        with patch(
+            "mdvault_mcp_server.tools.tasks_projects.run_mdv_command",
+            return_value="OK   mdv task done",
+        ) as mock_run:
+            tool(task_path="Projects/dev/Tasks/BUG-001.md")
+
+        # Only one call — no resolution needed
+        mock_run.assert_called_once_with(
+            ["task", "done", "Projects/dev/Tasks/BUG-001.md"]
+        )
+
+
+class TestCancelTaskWithId:
+    def test_cancel_task_resolves_id(self):
+        """cancel_task should resolve task IDs before calling mdv task cancel."""
+        tool = _get_tool("cancel_task")
+        status_output = "  Path:         tasks/X-001.md"
+        with patch(
+            "mdvault_mcp_server.tools.tasks_projects.run_mdv_command",
+        ) as mock_run:
+            mock_run.side_effect = [status_output, "OK   mdv task cancel"]
+            tool(task_path="X-001", reason="No longer needed")
+
+        mock_run.assert_any_call(["task", "status", "X-001"])
+        mock_run.assert_any_call(
+            ["task", "cancel", "tasks/X-001.md", "-r", "No longer needed"]
+        )
+
+    def test_cancel_task_with_path_skips_resolution(self):
+        """cancel_task with a file path should not call task status."""
+        tool = _get_tool("cancel_task")
+        with patch(
+            "mdvault_mcp_server.tools.tasks_projects.run_mdv_command",
+            return_value="OK",
+        ) as mock_run:
+            tool(task_path="tasks/X-001.md")
+
+        mock_run.assert_called_once_with(["task", "cancel", "tasks/X-001.md"])
