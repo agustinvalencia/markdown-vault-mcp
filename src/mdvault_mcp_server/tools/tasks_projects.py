@@ -69,6 +69,26 @@ def _create_literature_note_impl(  # noqa: PLR0913
     return run_mdv_command(args)
 
 
+def _resolve_task_path(task_id_or_path: str) -> str:
+    """Resolve a task ID (e.g. 'MDV-001') to its file path via `mdv task status`.
+
+    If the input already looks like a path (contains / or .md), returns it as-is.
+    """
+    if "/" in task_id_or_path or task_id_or_path.endswith(".md"):
+        return task_id_or_path
+
+    # Use `mdv task status TASK-ID` which resolves IDs and shows the path
+    output = run_mdv_command(["task", "status", task_id_or_path])
+    # Parse "Path: Projects/foo/Tasks/BAR-001-slug.md" from the output
+    for line in output.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("Path:"):
+            return stripped.removeprefix("Path:").strip()
+
+    # Fallback: return as-is and let the CLI error
+    return task_id_or_path
+
+
 def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     # --- Context / Focus ---
 
@@ -373,10 +393,11 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         the parent project note automatically.
 
         Args:
-            task_path: Path to the task file relative to vault root.
+            task_path: Task ID (e.g. "MDV-001") or path to the task file relative to vault root.
             summary: Optional summary of what was done (appended to task body).
         """
-        args = ["task", "done", task_path]
+        resolved = _resolve_task_path(task_path)
+        args = ["task", "done", resolved]
         if summary:
             args.extend(["-s", summary])
         return run_mdv_command(args)
@@ -389,10 +410,11 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         parent project note automatically.
 
         Args:
-            task_path: Path to the task file relative to vault root.
+            task_path: Task ID (e.g. "MDV-001") or path to the task file relative to vault root.
             reason: Optional reason for cancellation (appended to task body).
         """
-        args = ["task", "cancel", task_path]
+        resolved = _resolve_task_path(task_path)
+        args = ["task", "cancel", resolved]
         if reason:
             args.extend(["-r", reason])
         return run_mdv_command(args)
