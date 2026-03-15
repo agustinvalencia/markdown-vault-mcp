@@ -1,6 +1,6 @@
 [project]
 name = "mdvault-mcp-server"
-version = "0.3.0"
+version = "0.3.1"
 description = "MCP server for markdown vaults integration"
 readme = "README.md"
 requires-python = ">=3.14"
