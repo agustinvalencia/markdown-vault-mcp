@@ -78,7 +78,7 @@ class TestCompleteTaskWithId:
                 status_output,  # First call: task status for resolution
                 "OK   mdv task done",  # Second call: task done
             ]
-            result = tool(task_path="BUG-001", summary="Fixed it")
+            result = tool(task_id="BUG-001", summary="Fixed it")
 
         assert mock_run.call_count == 2
         mock_run.assert_any_call(["task", "status", "BUG-001"])
@@ -93,7 +93,7 @@ class TestCompleteTaskWithId:
             "mdvault_mcp_server.tools.tasks_projects.run_mdv_command",
             return_value="OK   mdv task done",
         ) as mock_run:
-            tool(task_path="Projects/dev/Tasks/BUG-001.md")
+            tool(task_id="Projects/dev/Tasks/BUG-001.md")
 
         # Only one call — no resolution needed
         mock_run.assert_called_once_with(
@@ -110,7 +110,7 @@ class TestCancelTaskWithId:
             "mdvault_mcp_server.tools.tasks_projects.run_mdv_command",
         ) as mock_run:
             mock_run.side_effect = [status_output, "OK   mdv task cancel"]
-            tool(task_path="X-001", reason="No longer needed")
+            tool(task_id="X-001", reason="No longer needed")
 
         mock_run.assert_any_call(["task", "status", "X-001"])
         mock_run.assert_any_call(
@@ -124,6 +124,6 @@ class TestCancelTaskWithId:
             "mdvault_mcp_server.tools.tasks_projects.run_mdv_command",
             return_value="OK",
         ) as mock_run:
-            tool(task_path="tasks/X-001.md")
+            tool(task_id="tasks/X-001.md")
 
         mock_run.assert_called_once_with(["task", "cancel", "tasks/X-001.md"])

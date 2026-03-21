@@ -184,7 +184,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             title: Title of the new project or area.
             context: Project context (e.g. 'work', 'personal').
             description: Optional description of the project (max 1024 chars).
-            status: Project status (e.g. 'open', 'closed').
+            status: Project status (e.g. 'open', 'in-progress', 'blocked', 'done', 'archived').
             kind: Either 'project' (finite goal, default) or 'area' (ongoing responsibility).
             extra_vars: Optional dictionary of additional variables for the template.
         """
@@ -282,6 +282,50 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         """
         return run_mdv_command(["project", "archive", project_name, "--yes"])
 
+    # --- Areas ---
+
+    @mcp.tool()
+    def get_area_report(area: str, period: str = "week") -> str:
+        """Get area health report: criteria vs actuals for a period.
+
+        Checks the area's health_criteria against daily note metadata
+        and returns how each standard is tracking.
+
+        Args:
+            area: Area name or ID (e.g. 'health', 'HEA').
+            period: 'week', 'month', or specific like '2026-W11', '2026-03'.
+
+        Returns:
+            JSON with area name, period, and criteria results
+            (label, field, actual, target, met).
+        """
+        return run_mdv_command(["area", "report", area, "--period", period, "--json"])
+
+    @mcp.tool()
+    def export_area_metrics(area: str, format: str = "csv", from_date: str | None = None, to_date: str | None = None) -> str:
+        """Export area metrics as CSV or JSON for trend analysis.
+
+        Dumps daily note metadata for the area's criteria fields
+        over a date range. Useful for plotting trends externally.
+
+        Args:
+            area: Area name or ID (e.g. 'health', 'HEA').
+            format: Output format ('csv' or 'json').
+            from_date: Start date in YYYY-MM-DD format. Defaults to 30 days ago.
+            to_date: End date in YYYY-MM-DD format. Defaults to today.
+
+        Returns:
+            CSV or JSON string with daily values for each criterion field.
+        """
+        args = ["area", "export", area, "--format", format]
+        if from_date:
+            args.extend(["--from", from_date])
+        if to_date:
+            args.extend(["--to", to_date])
+        return run_mdv_command(args)
+
+    # --- Notes (logging) ---
+
     @mcp.tool()
     def log_to_note(note_path: str, content: str) -> str:
         """Append a log entry to the 'Logs' section of any note (project, task, etc.).
@@ -323,7 +367,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
 
         Args:
             project_filter: Filter tasks by project name.
-            status_filter: Filter tasks by status (e.g., 'todo', 'doing', 'done').
+            status_filter: Filter tasks by status ('todo', 'in-progress', 'blocked', 'done', 'cancelled', 'archived').
         """
         args = ["task", "list"]
         if project_filter:
@@ -386,34 +430,34 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         return run_mdv_command(args)
 
     @mcp.tool()
-    def complete_task(task_path: str, summary: str | None = None) -> str:
+    def complete_task(task_id: str, summary: str | None = None) -> str:
         """Mark a task as done.
 
         Sets status to 'done' with a completion timestamp. Logs completion to
         the parent project note automatically.
 
         Args:
-            task_path: Task ID (e.g. "MDV-001") or path to the task file relative to vault root.
+            task_id: Task ID (e.g. "MDV-001") or path to the task file relative to vault root.
             summary: Optional summary of what was done (appended to task body).
         """
-        resolved = _resolve_task_path(task_path)
+        resolved = _resolve_task_path(task_id)
         args = ["task", "done", resolved]
         if summary:
             args.extend(["-s", summary])
         return run_mdv_command(args)
 
     @mcp.tool()
-    def cancel_task(task_path: str, reason: str | None = None) -> str:
+    def cancel_task(task_id: str, reason: str | None = None) -> str:
         """Cancel a task.
 
         Sets status to 'cancelled' with a timestamp. Logs cancellation to the
         parent project note automatically.
 
         Args:
-            task_path: Task ID (e.g. "MDV-001") or path to the task file relative to vault root.
+            task_id: Task ID (e.g. "MDV-001") or path to the task file relative to vault root.
             reason: Optional reason for cancellation (appended to task body).
         """
-        resolved = _resolve_task_path(task_path)
+        resolved = _resolve_task_path(task_id)
         args = ["task", "cancel", resolved]
         if reason:
             args.extend(["-r", reason])

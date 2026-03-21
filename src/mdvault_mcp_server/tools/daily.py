@@ -168,16 +168,16 @@ def register_daily_tools(mcp: FastMCP) -> None:
         return run_mdv_command(args)
 
     @mcp.tool()
-    def log_to_daily_note(content: str) -> str:
+    def log_to_daily_note(log_message: str) -> str:
         """Append a log entry to the 'Logs' section of today's daily note.
 
         Format: - **HH:MM**: Content
 
         Args:
-            content: The log message to append.
+            log_message: The log message to append.
 
         Returns:
             Success message or error description.
         """
-        formatted_log = format_log_entry(content, target_date=date.today())
+        formatted_log = format_log_entry(log_message, target_date=date.today())
         return _add_to_daily_note_impl(formatted_log, subsection="Logs")
