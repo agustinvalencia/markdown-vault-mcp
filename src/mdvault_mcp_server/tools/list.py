@@ -33,6 +33,15 @@ def validated_path(folder: str) -> tuple[bool, str]:
 def register_list_tools(mcp: FastMCP) -> None:
     @mcp.tool()
     def list_notes(folder: str = "") -> str:
+        """List all markdown notes in the vault, optionally scoped to a folder.
+
+        Args:
+            folder: Subfolder to list notes from (relative to vault root).
+                    If empty, lists all notes in the vault.
+
+        Returns:
+            Newline-separated list of note paths relative to vault root.
+        """
         ok, result = validated_path(folder)
         if not ok:
             return result
@@ -47,6 +56,17 @@ def register_list_tools(mcp: FastMCP) -> None:
 
     @mcp.tool()
     def list_folders(folder: str = "") -> str:
+        """List subfolders in the vault, optionally scoped to a parent folder.
+
+        Skips hidden directories and empty folders.
+
+        Args:
+            folder: Parent folder to list subfolders from (relative to vault root).
+                    If empty, lists top-level vault folders.
+
+        Returns:
+            Newline-separated list of folder paths relative to vault root.
+        """
         ok, result = validated_path(folder)
         if not ok:
             return result
