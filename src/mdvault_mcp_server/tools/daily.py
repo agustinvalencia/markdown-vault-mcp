@@ -75,11 +75,13 @@ def register_daily_tools(mcp: FastMCP) -> None:
         return _create_daily_note_impl(date, extra_vars)
 
     @mcp.tool()
-    def add_to_daily_note(content: str, subsection: str | None = None) -> str:
-        """Append content to today's daily note.
+    def append_to_daily_note(content: str, subsection: str | None = None) -> str:
+        """Append content to today's daily note under an optional subsection.
 
         Creates the daily note and its parent directories if they don't exist.
         The note path matches the configured 'daily_format' (default: 'Journal/YYYY/Daily/YYYY-MM-DD.md').
+
+        For timestamped log entries, use log_to_daily_note instead.
 
         Args:
             content: Content to append
