@@ -94,6 +94,13 @@ def append_content_logic(existing: str, content: str, subsection: str | None) ->
     prefix = existing[:insertion_point]
     suffix = existing[insertion_point:]
 
+    # Normalise trailing whitespace on prefix: collapse any trailing blank
+    # lines down to a single newline so that new content sits directly
+    # after existing entries (no spurious blank line).  The suffix spacing
+    # below re-adds the required gap before the next section.
+    if prefix.endswith("\n"):
+        prefix = prefix.rstrip("\n") + "\n"
+
     content_to_insert = content
 
     # Prefix spacing: ensure content starts on a new line, but don't add

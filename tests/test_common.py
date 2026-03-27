@@ -205,6 +205,38 @@ class TestAppendContentLogicExistingSubsection:
         assert "## Tasks" in r2
         assert "- task1" in r2
 
+    def test_no_blank_line_when_cli_left_gap_before_next_section(self):
+        """When the CLI writes entries and leaves a \\n\\n gap before the next
+        section, a subsequent MCP append must NOT produce a blank line between
+        the existing entry and the new one."""
+        # Simulate CLI having written an entry with a blank line before next section
+        existing = (
+            "# Daily\n\n"
+            "## Logs\n"
+            "- **10:27**: CLI entry\n"
+            "\n"
+            "## Closing Thoughts\n"
+        )
+        new, created = append_content_logic(existing, "- **10:36**: MCP entry", "Logs")
+        assert created is False
+        # Entries must be on consecutive lines — no blank line between them
+        assert "- **10:27**: CLI entry\n- **10:36**: MCP entry\n" in new
+        # Next section must still be separated by a blank line
+        assert "MCP entry\n\n## Closing Thoughts" in new
+
+    def test_no_blank_line_when_multiple_cli_gaps(self):
+        """Multiple trailing blank lines in prefix should all be collapsed."""
+        existing = (
+            "# Daily\n\n"
+            "## Logs\n"
+            "- entry1\n"
+            "\n\n\n"
+            "## Other\n"
+        )
+        new, _ = append_content_logic(existing, "- entry2", "Logs")
+        assert "- entry1\n- entry2\n" in new
+        assert "entry2\n\n## Other" in new
+
 
 class TestAppendContentLogicHeadingLevels:
     """Subsections at different heading levels."""
