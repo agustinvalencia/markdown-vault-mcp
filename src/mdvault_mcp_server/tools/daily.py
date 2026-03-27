@@ -3,7 +3,7 @@ from datetime import date
 from fastmcp import FastMCP
 
 from ..config import DAILY_NOTE_FORMAT, VAULT_PATH
-from .common import append_content_logic, format_log_entry, run_mdv_command
+from .common import ExtraVars, append_content_logic, format_log_entry, run_mdv_command
 from .frontmatter import update_note_content
 
 
@@ -41,7 +41,7 @@ def _add_to_daily_note_impl(content: str, subsection: str | None = None) -> str:
 
 def _create_daily_note_impl(
     date: str | None = None,
-    extra_vars: dict[str, str] | None = None,
+    extra_vars: ExtraVars = None,
 ) -> str:
     """Internal implementation of create_daily_note."""
     args = ["new", "daily", "--batch"]
@@ -57,7 +57,7 @@ def register_daily_tools(mcp: FastMCP) -> None:
     @mcp.tool()
     def create_daily_note(
         date: str | None = None,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create today's daily note from the configured template.
 
@@ -112,7 +112,7 @@ def register_daily_tools(mcp: FastMCP) -> None:
     @mcp.tool()
     def create_weekly_note(
         week: str | None = None,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create a weekly note from the configured template.
 
@@ -140,7 +140,7 @@ def register_daily_tools(mcp: FastMCP) -> None:
         period: str | None = None,
         period_start: str | None = None,
         period_end: str | None = None,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create a monthly report note from the configured template.
 

@@ -4,7 +4,7 @@ import re
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
-from .common import append_content_logic, format_log_entry, run_mdv_command
+from .common import ExtraVars, append_content_logic, format_log_entry, run_mdv_command
 from .frontmatter import update_note_content
 
 
@@ -50,7 +50,7 @@ def _create_literature_note_impl(  # noqa: PLR0913
     year: int | None = None,
     url: str | None = None,
     source_type: str | None = None,
-    extra_vars: dict[str, str] | None = None,
+    extra_vars: ExtraVars = None,
 ) -> str:
     """Internal implementation of create_literature_note."""
     args = ["new", "literature", title, "--batch"]
@@ -176,7 +176,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         description: str | None = None,
         status: str | None = None,
         kind: str = "project",
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create a new project or area.
 
@@ -209,7 +209,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         title: str,
         attendees: str | None = None,
         date: str | None = None,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create a new meeting note.
 
@@ -245,7 +245,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         year: int | None = None,
         url: str | None = None,
         source_type: str | None = None,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create a new literature note from the template.
 
@@ -393,7 +393,7 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         due_date: str | None = None,
         priority: str | None = None,
         status: str | None = None,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create a new task.
 

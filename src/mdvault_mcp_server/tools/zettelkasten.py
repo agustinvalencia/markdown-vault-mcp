@@ -7,7 +7,7 @@ from pathlib import Path
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
-from .common import run_mdv_command
+from .common import ExtraVars, run_mdv_command
 
 # Regex patterns for link extraction
 WIKILINK_PATTERN = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]+)?\]\]")
@@ -173,7 +173,7 @@ def register_zettelkasten_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
         source: str | None = None,
         body: str | None = None,
         connections: list[str] | None = None,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Create a new zettel (atomic knowledge note).
 

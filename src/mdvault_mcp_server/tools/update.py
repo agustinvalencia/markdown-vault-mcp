@@ -8,7 +8,7 @@ from typing import Any
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
-from .common import append_content_logic, run_mdv_command
+from .common import ExtraVars, append_content_logic, run_mdv_command
 from .frontmatter import update_note_content, update_note_metadata
 
 
@@ -17,7 +17,7 @@ def register_update_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
     def capture_content(
         name: str,
         text: str,
-        extra_vars: dict[str, str] | None = None,
+        extra_vars: ExtraVars = None,
     ) -> str:
         """Capture content into a configured capture location.
 

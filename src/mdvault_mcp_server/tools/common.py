@@ -1,10 +1,37 @@
+import json
 import os
 import re
 import shutil
 import subprocess
 from datetime import date, datetime
+from typing import Annotated
+
+from pydantic import BeforeValidator
 
 from ..config import VAULT_PATH
+
+
+def _coerce_extra_vars(v: object) -> dict[str, str] | None:
+    """Accept both a dict and a JSON string for extra_vars."""
+    if v is None:
+        return None
+    if isinstance(v, dict):
+        return v
+    if isinstance(v, str):
+        try:
+            parsed = json.loads(v)
+        except json.JSONDecodeError:
+            msg = f"extra_vars must be a JSON object, got invalid JSON: {v!r}"
+            raise ValueError(msg) from None
+        if not isinstance(parsed, dict):
+            msg = f"extra_vars must be a JSON object, got {type(parsed).__name__}"
+            raise ValueError(msg)
+        return parsed
+    msg = f"extra_vars must be a dict or JSON string, got {type(v).__name__}"
+    raise ValueError(msg)
+
+
+ExtraVars = Annotated[dict[str, str] | None, BeforeValidator(_coerce_extra_vars)]
 
 
 def format_log_entry(content: str, target_date: date | str | None = None) -> str:
