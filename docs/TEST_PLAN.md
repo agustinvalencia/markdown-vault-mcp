@@ -14,10 +14,11 @@
 - [x] **`tools/frontmatter.py`** (Partial coverage exists)
     - [ ] Test `write_note` (creation logic).
     - [ ] Test `update_note_content` (modifier function logic).
-- [ ] **`tools/common.py`**
-    - [ ] Test `format_log_entry`.
-    - [ ] Test `append_content_logic` (crucial for ensuring note structure isn't broken when appending).
-    - [ ] Mock `run_mdv_command` to test failure/success paths without running actual CLI.
+- [x] **`tools/common.py`**
+    - [x] Test `format_log_entry`.
+    - [x] Test `append_content_logic` (crucial for ensuring note structure isn't broken when appending).
+    - [x] Test `append_content_logic` with protected tail sections (Logs, Closing Thoughts stay at bottom).
+    - [x] Mock `run_mdv_command` to test failure/success paths without running actual CLI.
 - [ ] **`config.py`**
     - [ ] Test validation logic for paths (`validate_file`).
 
@@ -54,5 +55,6 @@
 - **Regression:** Every bug fix must include a reproduction test case (as demonstrated with `test_frontmatter.py`).
 
 ## 4. Immediate Next Steps
-1. Create `tests/test_common.py` to cover `append_content_logic`.
-2. Create `tests/test_update.py` to cover `update_task_status`.
+1. ~~Create `tests/test_common.py` to cover `append_content_logic`.~~ Done.
+2. ~~Create `tests/test_update.py` to cover `update_task_status`.~~ Done.
+3. Add integration tests for protected tail sections across `daily.py`, `update.py`, and `tasks_projects.py`.

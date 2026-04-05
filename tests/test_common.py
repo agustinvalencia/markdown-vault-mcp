@@ -7,6 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from mdvault_mcp_server.tools.common import (
+    DEFAULT_PROTECTED_TAIL_SECTIONS,
     append_content_logic,
     format_log_entry,
     run_mdv_command,
@@ -300,3 +301,109 @@ class TestAppendContentLogicEdgeCases:
         # Should create a new section since 'Logs' doesn't exist
         assert created is True
         assert "## Logs\n\n- entry" in new
+
+
+# ---------------------------------------------------------------------------
+# append_content_logic — protected tail sections
+# ---------------------------------------------------------------------------
+
+
+class TestAppendContentLogicProtectedTailSections:
+    """New subsections and raw appends should land before protected sections."""
+
+    PROTECTED = DEFAULT_PROTECTED_TAIL_SECTIONS  # ["Logs", "Closing Thoughts"]
+
+    def test_new_subsection_before_logs(self):
+        """A new subsection should be inserted before Logs, not at EOF."""
+        existing = "# Daily\n\n## Logs\n\n- log1\n\n## Closing Thoughts\n\nthoughts\n"
+        new, created = append_content_logic(
+            existing, "- item", "Activity", protected_tail_sections=self.PROTECTED,
+        )
+        assert created is True
+        activity_pos = new.index("## Activity")
+        logs_pos = new.index("## Logs")
+        assert activity_pos < logs_pos
+
+    def test_new_subsection_before_closing_thoughts_when_no_logs(self):
+        """If only Closing Thoughts exists, insert before it."""
+        existing = "# Daily\n\n## Closing Thoughts\n\nthoughts\n"
+        new, created = append_content_logic(
+            existing, "- item", "Activity", protected_tail_sections=self.PROTECTED,
+        )
+        assert created is True
+        activity_pos = new.index("## Activity")
+        closing_pos = new.index("## Closing Thoughts")
+        assert activity_pos < closing_pos
+
+    def test_no_protected_sections_falls_back_to_eof(self):
+        """Without protected sections present, new subsection goes to EOF as before."""
+        existing = "# Daily\n\n## Notes\n\nstuff\n"
+        new, created = append_content_logic(
+            existing, "- item", "Activity", protected_tail_sections=self.PROTECTED,
+        )
+        assert created is True
+        assert new.endswith("## Activity\n\n- item")
+
+    def test_raw_append_before_protected_sections(self):
+        """Raw content (no subsection) should land before protected sections."""
+        existing = "# Daily\n\n## Logs\n\n- log1\n"
+        new, created = append_content_logic(
+            existing, "some content", None, protected_tail_sections=self.PROTECTED,
+        )
+        assert created is False
+        content_pos = new.index("some content")
+        logs_pos = new.index("## Logs")
+        assert content_pos < logs_pos
+
+    def test_existing_subsection_unaffected_by_protected(self):
+        """Appending to an existing subsection should work as before."""
+        existing = (
+            "# Daily\n\n"
+            "## Activity\n\n- old\n\n"
+            "## Logs\n\n- log1\n\n"
+            "## Closing Thoughts\n\nthoughts\n"
+        )
+        new, created = append_content_logic(
+            existing, "- new", "Activity", protected_tail_sections=self.PROTECTED,
+        )
+        assert created is False
+        assert "- old\n- new" in new
+        # Logs and Closing Thoughts still after Activity
+        activity_pos = new.index("## Activity")
+        logs_pos = new.index("## Logs")
+        closing_pos = new.index("## Closing Thoughts")
+        assert activity_pos < logs_pos < closing_pos
+
+    def test_protected_section_itself_appends_normally(self):
+        """Appending to Logs (a protected section) should still work."""
+        existing = "# Daily\n\n## Logs\n\n- log1\n\n## Closing Thoughts\n\nthoughts\n"
+        new, created = append_content_logic(
+            existing, "- log2", "Logs", protected_tail_sections=self.PROTECTED,
+        )
+        assert created is False
+        assert "- log1\n- log2" in new
+        # Closing Thoughts stays after
+        log2_pos = new.index("- log2")
+        closing_pos = new.index("## Closing Thoughts")
+        assert log2_pos < closing_pos
+
+    def test_empty_protected_list_behaves_like_original(self):
+        """Passing an empty list should not change behaviour."""
+        existing = "# Daily\n\n## Logs\n\n- log1\n"
+        new, created = append_content_logic(
+            existing, "- item", "Activity", protected_tail_sections=[],
+        )
+        assert created is True
+        # New section at EOF (after Logs)
+        activity_pos = new.index("## Activity")
+        logs_pos = new.index("## Logs")
+        assert activity_pos > logs_pos
+
+    def test_none_protected_behaves_like_original(self):
+        """Default (None) should not change behaviour."""
+        existing = "# Daily\n\n## Logs\n\n- log1\n"
+        new, created = append_content_logic(existing, "- item", "Activity")
+        assert created is True
+        activity_pos = new.index("## Activity")
+        logs_pos = new.index("## Logs")
+        assert activity_pos > logs_pos

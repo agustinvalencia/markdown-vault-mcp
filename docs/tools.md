@@ -242,6 +242,8 @@ Result: Updates frontmatter, preserving existing fields like title and tags
 
 Append content to a note, optionally within a specific subsection.
 
+Protected tail sections ("Logs", "Closing Thoughts") are kept at the bottom of the note. When a new subsection is created or content is appended without a subsection, it is inserted before the first protected section rather than at the end of the file.
+
 **Parameters:**
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -253,8 +255,8 @@ Append content to a note, optionally within a specific subsection.
 
 **Example:**
 ```
-Input: note_path="daily/2024-01-15.md", content="\n## Evening Update\n\nFinished the API review."
-Result: Content appended to end of note
+Input: note_path="daily/2024-01-15.md", content="- Review done", subsection="Activity"
+Result: New "Activity" section created before "Logs" (if present), not at end of note
 ```
 
 ---
@@ -302,6 +304,8 @@ Tools for managing daily notes.
 
 Append content to today's daily note. Automatically creates the note and directory if they don't exist.
 
+Protected tail sections ("Logs", "Closing Thoughts") are kept at the bottom of the note. New subsections are inserted before the first protected section, preserving the daily note's canonical structure.
+
 **Parameters:**
 | Name | Type | Required | Default | Description |
 |------|------|----------|---------|-------------|
@@ -317,6 +321,7 @@ Append content to today's daily note. Automatically creates the note and directo
 ```
 Input: content="Finished the API review", subsection="Evening Update"
 Result: Appended content to subsection 'Evening Update' in daily/2026-01-08.md
+       (inserted before Logs/Closing Thoughts if they exist)
 ```
 
 ---

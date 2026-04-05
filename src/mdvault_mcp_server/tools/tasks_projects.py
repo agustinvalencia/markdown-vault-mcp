@@ -4,7 +4,13 @@ import re
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
-from .common import ExtraVars, append_content_logic, format_log_entry, run_mdv_command
+from .common import (
+    DEFAULT_PROTECTED_TAIL_SECTIONS,
+    ExtraVars,
+    append_content_logic,
+    format_log_entry,
+    run_mdv_command,
+)
 from .frontmatter import update_note_content
 
 
@@ -348,7 +354,10 @@ def register_tasks_projects_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             formatted_log = format_log_entry(content)
 
             def modifier(body: str) -> tuple[str, str]:
-                new_body, created_new = append_content_logic(body, formatted_log, subsection="Logs")
+                new_body, created_new = append_content_logic(
+                    body, formatted_log, subsection="Logs",
+                    protected_tail_sections=DEFAULT_PROTECTED_TAIL_SECTIONS,
+                )
                 if created_new:
                     msg = f"Created subsection 'Logs' and appended content to {note_path}"
                 else:

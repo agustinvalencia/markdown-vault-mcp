@@ -8,7 +8,12 @@ from typing import Any
 from fastmcp import FastMCP
 
 from ..config import VAULT_PATH, validate_file
-from .common import ExtraVars, append_content_logic, run_mdv_command
+from .common import (
+    DEFAULT_PROTECTED_TAIL_SECTIONS,
+    ExtraVars,
+    append_content_logic,
+    run_mdv_command,
+)
 from .frontmatter import update_note_content, update_note_metadata
 
 
@@ -85,7 +90,10 @@ def register_update_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
 
         try:
             def modifier(body: str) -> tuple[str, str]:
-                new_body, created_new = append_content_logic(body, content, subsection)
+                new_body, created_new = append_content_logic(
+                    body, content, subsection,
+                    protected_tail_sections=DEFAULT_PROTECTED_TAIL_SECTIONS,
+                )
                 
                 if created_new:
                     msg = f"Created subsection '{subsection}' and appended content in {note_path}"

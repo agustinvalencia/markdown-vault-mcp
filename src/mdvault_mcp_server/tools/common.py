@@ -87,25 +87,95 @@ def run_mdv_command(args: list[str]) -> str:
         return f"Failed to execute mdv command: {e}"
 
 
-def append_content_logic(existing: str, content: str, subsection: str | None) -> tuple[str, bool]:
+DEFAULT_PROTECTED_TAIL_SECTIONS: list[str] = ["Logs", "Closing Thoughts"]
+
+
+def _find_earliest_protected_section(existing: str, protected: list[str]) -> int | None:
+    """Return the character offset of the earliest protected section heading, or None."""
+    earliest: int | None = None
+    for section_name in protected:
+        pattern = re.compile(
+            r"^#{1,6}\s+" + re.escape(section_name) + r"\s*$", re.MULTILINE
+        )
+        match = pattern.search(existing)
+        if match and (earliest is None or match.start() < earliest):
+            earliest = match.start()
+    return earliest
+
+
+def _protected_insertion_point(existing: str, protected: list[str]) -> int:
+    """Return the offset where new content should be inserted, respecting protected tails."""
+    if protected:
+        earliest = _find_earliest_protected_section(existing, protected)
+        if earliest is not None:
+            return earliest
+    return len(existing)
+
+
+def _insert_raw_content(existing: str, content: str, protected: list[str]) -> str:
+    """Insert raw content (no subsection) before protected tail sections."""
+    insertion_point = _protected_insertion_point(existing, protected)
+    prefix = existing[:insertion_point]
+    suffix = existing[insertion_point:]
+
+    if prefix and not prefix.endswith("\n"):
+        prefix += "\n"
+    if suffix and not content.endswith("\n"):
+        content += "\n"
+    if suffix and not content.endswith("\n\n"):
+        content += "\n"
+
+    return prefix + content + suffix
+
+
+def _create_new_subsection(
+    existing: str, content: str, subsection: str, protected: list[str],
+) -> str:
+    """Create a new subsection, inserting before protected tail sections."""
+    insertion_point = _protected_insertion_point(existing, protected)
+    prefix = existing[:insertion_point]
+    suffix = existing[insertion_point:]
+
+    if prefix and not prefix.endswith("\n"):
+        prefix += "\n"
+    if prefix and not prefix.endswith("\n\n"):
+        prefix += "\n"
+
+    new_section = f"## {subsection}\n\n{content}"
+    if suffix:
+        if not new_section.endswith("\n"):
+            new_section += "\n"
+        if not new_section.endswith("\n\n"):
+            new_section += "\n"
+
+    return prefix + new_section + suffix
+
+
+def append_content_logic(
+    existing: str,
+    content: str,
+    subsection: str | None,
+    protected_tail_sections: list[str] | None = None,
+) -> tuple[str, bool]:
     """
     Appends content to existing markdown.
     Returns (new_content, created_subsection).
+
+    When *protected_tail_sections* is provided, new subsections (and raw
+    appends without a subsection) are inserted before the first protected
+    section rather than at EOF.  This keeps sections like "Logs" and
+    "Closing Thoughts" at the bottom of the note.
     """
+    protected = protected_tail_sections or []
+
     if not subsection:
-        if existing and not existing.endswith("\n"):
-            existing += "\n"
-        return existing + content, False
+        return _insert_raw_content(existing, content, protected), False
 
     pattern = re.compile(r"^(#{1,6})\s+" + re.escape(subsection) + r"\s*$", re.MULTILINE)
     match = pattern.search(existing)
 
     if not match:
-        if existing and not existing.endswith("\n"):
-            existing += "\n"
-        if existing and not existing.endswith("\n\n"):
-            existing += "\n"
-        return existing + f"## {subsection}\n\n{content}", True
+        return _create_new_subsection(existing, content, subsection, protected), True
 
     # Subsection found
     header_level = len(match.group(1))

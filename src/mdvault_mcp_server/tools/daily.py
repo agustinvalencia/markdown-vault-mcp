@@ -3,7 +3,13 @@ from datetime import date
 from fastmcp import FastMCP
 
 from ..config import DAILY_NOTE_FORMAT, VAULT_PATH
-from .common import ExtraVars, append_content_logic, format_log_entry, run_mdv_command
+from .common import (
+    DEFAULT_PROTECTED_TAIL_SECTIONS,
+    ExtraVars,
+    append_content_logic,
+    format_log_entry,
+    run_mdv_command,
+)
 from .frontmatter import update_note_content
 
 
@@ -24,7 +30,10 @@ def _add_to_daily_note_impl(content: str, subsection: str | None = None) -> str:
             run_mdv_command(["new", "daily", "--batch"])
 
         def modifier(body: str) -> tuple[str, str]:
-            new_body, created_new = append_content_logic(body, content, subsection)
+            new_body, created_new = append_content_logic(
+                body, content, subsection,
+                protected_tail_sections=DEFAULT_PROTECTED_TAIL_SECTIONS,
+            )
             if created_new:
                 msg = f"Created subsection '{subsection}' and appended content to {rel_path_str}"
             elif subsection:
