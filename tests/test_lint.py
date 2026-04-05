@@ -1,20 +1,22 @@
 """Tests for vault lint MCP tool."""
 
-import json
 from unittest.mock import patch
-
-import pytest
 
 from mdvault_mcp_server.tools.lint import _format_report, register_lint_tools
 
 
-def _get_tool():
-    """Register lint tools on a test MCP and return the vault_lint function."""
+def _get_tools():
+    """Register lint tools on a test MCP and return tool functions by name."""
     from fastmcp import FastMCP
 
     mcp = FastMCP("test")
     register_lint_tools(mcp)
-    return mcp._tool_manager._tools["vault_lint"].fn
+    return {name: t.fn for name, t in mcp._tool_manager._tools.items()}
+
+
+def _get_tool():
+    """Return the vault_lint tool function."""
+    return _get_tools()["vault_lint"]
 
 
 # ── _format_report tests ─────────────────────────────────────────────────
@@ -241,7 +243,7 @@ class TestFormatReport:
 class TestVaultLint:
     def test_mdv_not_found(self):
         tool = _get_tool()
-        with patch("mdvault_mcp_server.tools.lint.run_mdv_command", return_value="Error: 'mdv' executable not found in PATH."):
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value="Error: 'mdv' executable not found in PATH."):
             result = tool()
         assert "Error" in result
 
@@ -257,14 +259,14 @@ class TestVaultLint:
             },
             "categories": [],
         }
-        with patch("mdvault_mcp_server.tools.lint.run_mdv_command", return_value=json.dumps(report)):
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value=report):
             result = tool()
         assert "100%" in result
         assert "No issues found" in result
 
     def test_json_parse_error(self):
         tool = _get_tool()
-        with patch("mdvault_mcp_server.tools.lint.run_mdv_command", return_value="not json {{{"):
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value="Failed to parse mdv output:\nnot json {{{"):
             result = tool()
         assert "Failed to parse" in result
 
@@ -274,7 +276,7 @@ class TestVaultLint:
             "summary": {"total_notes": 0, "total_errors": 0, "total_warnings": 0, "health_score": 1.0, "reindex_performed": False},
             "categories": [],
         }
-        with patch("mdvault_mcp_server.tools.lint.run_mdv_command", return_value=json.dumps(report)) as mock_run:
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value=report) as mock_run:
             tool(category="broken_references")
         mock_run.assert_called_once_with(["check", "--json", "--category", "broken_references"])
 
@@ -284,6 +286,81 @@ class TestVaultLint:
             "summary": {"total_notes": 0, "total_errors": 0, "total_warnings": 0, "health_score": 1.0, "reindex_performed": False},
             "categories": [],
         }
-        with patch("mdvault_mcp_server.tools.lint.run_mdv_command", return_value=json.dumps(report)) as mock_run:
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value=report) as mock_run:
             tool()
         mock_run.assert_called_once_with(["check", "--json"])
+
+
+# ── validate_note tool tests ────────────────────────────────────────────
+
+
+class TestValidateNote:
+    def _get_validate_tool(self):
+        return _get_tools()["validate_note"]
+
+    def test_all_valid(self):
+        tool = self._get_validate_tool()
+        report = {"total": 5, "valid": 5, "errors": 0, "fixed": 0, "results": []}
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value=report):
+            result = tool()
+        assert "5/5" in result
+        assert "All notes pass" in result
+
+    def test_errors_shown(self):
+        tool = self._get_validate_tool()
+        report = {
+            "total": 1,
+            "valid": 0,
+            "errors": 1,
+            "fixed": 0,
+            "results": [
+                {
+                    "path": "Journal/2026/Daily/2026-04-05.md",
+                    "note_type": "daily",
+                    "valid": False,
+                    "errors": ["missing required field: created_at", "missing required field: week"],
+                    "warnings": [],
+                }
+            ],
+        }
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value=report):
+            result = tool(path="Journal/2026/Daily/2026-04-05.md")
+        assert "0/1" in result
+        assert "created_at" in result
+        assert "week" in result
+
+    def test_fixes_shown(self):
+        tool = self._get_validate_tool()
+        report = {
+            "total": 1,
+            "valid": 0,
+            "errors": 0,
+            "fixed": 1,
+            "results": [
+                {
+                    "path": "Journal/2026/Daily/2026-04-05.md",
+                    "note_type": "daily",
+                    "valid": False,
+                    "errors": ["missing required field: week"],
+                    "warnings": [],
+                    "fixes_applied": ["Added missing field 'week' with default '[[2026-W14]]'"],
+                }
+            ],
+        }
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value=report):
+            result = tool(path="Journal/2026/Daily/2026-04-05.md", fix=True)
+        assert "1 fixed" in result
+        assert "FIXED" in result
+
+    def test_type_filter_passed(self):
+        tool = self._get_validate_tool()
+        report = {"total": 0, "valid": 0, "errors": 0, "fixed": 0, "results": []}
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value=report) as mock_run:
+            tool(note_type="daily", limit=10)
+        mock_run.assert_called_once_with(["validate", "--output", "json", "--type", "daily", "--limit", "10"])
+
+    def test_mdv_error(self):
+        tool = self._get_validate_tool()
+        with patch("mdvault_mcp_server.tools.lint._run_mdv_json", return_value="Error: 'mdv' executable not found in PATH."):
+            result = tool()
+        assert "Error" in result
