@@ -33,7 +33,7 @@ flowchart TB
 
 ## Installation
 
-Requires Python 3.14+ and [uv](https://docs.astral.sh/uv/).
+Requires Python 3.13+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
 git clone https://github.com/agustinvalencia/markdown-vault-mcp.git
@@ -43,22 +43,21 @@ uv sync
 
 ## Configuration
 
-Set the vault path environment variable:
-
-```bash
-export MARKDOWN_VAULT_PATH="/path/to/your/vault"
-```
+The server needs the `MARKDOWN_VAULT_PATH` environment variable pointing to your vault root.
 
 ### Claude Desktop
 
-Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json`):
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
     "markdown-vault": {
       "command": "uv",
-      "args": ["run", "--directory", "/path/to/markdown-vault-mcp", "python", "-m", "mdvault_mcp_server"],
+      "args": [
+        "--directory", "/path/to/markdown-vault-mcp",
+        "run", "mcp-start"
+      ],
       "env": {
         "MARKDOWN_VAULT_PATH": "/path/to/your/vault"
       }
@@ -67,13 +66,28 @@ Add to your Claude Desktop configuration (`~/Library/Application Support/Claude/
 }
 ```
 
+Restart Claude Desktop to activate.
+
 ### Claude Code
 
-Add to your Claude Code MCP settings:
+Add as a **user-scoped** MCP server (available in all projects):
 
 ```bash
-claude mcp add markdown-vault -- uv run --directory /path/to/markdown-vault-mcp python -m mdvault_mcp_server
+claude mcp add markdown-vault \
+  -s user \
+  -e MARKDOWN_VAULT_PATH=/path/to/your/vault \
+  -- uv --directory /path/to/markdown-vault-mcp run mcp-start
 ```
+
+This writes to `~/.claude.json`. To scope it to a single project instead, use `-s project` (writes to `.mcp.json` in the project root).
+
+Restart the Claude Code session (or use `/mcp` to reload) to activate.
+
+### Verifying the connection
+
+**Claude Desktop:** Open a new conversation and check the MCP icon shows `markdown-vault` as connected.
+
+**Claude Code:** Run `claude mcp list` and confirm `markdown-vault` shows `✓ Connected`.
 
 ## Available Tools
 
