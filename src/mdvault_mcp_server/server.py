@@ -1,5 +1,6 @@
 from fastmcp import FastMCP
 
+from .audit import install_audit_logging
 from .tools import (
     register_context_tools,
     register_daily_tools,
@@ -41,5 +42,8 @@ def create_server() -> FastMCP:
     register_tasks_projects_tools(mcp)
     register_management_tools(mcp)
     register_lint_tools(mcp)
+
+    # Wrap all registered tools with audit logging
+    install_audit_logging(mcp)
 
     return mcp
