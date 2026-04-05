@@ -181,6 +181,87 @@ class TestAppendToNote:
         assert "does not exist" in result.lower() or "not found" in result.lower()
 
 
+class TestReplaceInNote:
+    """Tests for replace_in_note tool."""
+
+    @pytest.mark.usefixtures("_patch_vault")
+    def test_replace_first_occurrence(self, vault_tmp, note_with_sections):
+        """Should replace the first occurrence by default."""
+        replace_in_note = _get_tool("replace_in_note")
+        result = replace_in_note("sections.md", "existing log entry", "updated log entry")
+
+        assert "Replaced 1 occurrence" in result
+
+        content = note_with_sections.read_text(encoding="utf-8")
+        assert "updated log entry" in content
+        assert "existing log entry" not in content
+
+    @pytest.mark.usefixtures("_patch_vault")
+    def test_replace_all_occurrences(self, vault_tmp):
+        """Should replace all occurrences when count=0."""
+        note = vault_tmp / "repeats.md"
+        note.write_text(
+            "---\ntitle: Repeats\n---\n\nfoo bar foo baz foo\n",
+            encoding="utf-8",
+        )
+        replace_in_note = _get_tool("replace_in_note")
+        result = replace_in_note("repeats.md", "foo", "qux", count=0)
+
+        assert "Replaced all 3 occurrence" in result
+
+        content = note.read_text(encoding="utf-8")
+        assert "foo" not in content
+        assert content.count("qux") == 3
+
+    @pytest.mark.usefixtures("_patch_vault")
+    def test_text_not_found(self, vault_tmp, note_with_sections):
+        """Should return error when old_text is not in the note."""
+        replace_in_note = _get_tool("replace_in_note")
+        result = replace_in_note("sections.md", "nonexistent text", "replacement")
+
+        assert "error" in result.lower() or "not found" in result.lower()
+
+    @pytest.mark.usefixtures("_patch_vault")
+    def test_missing_file(self, vault_tmp):
+        """Should return error for non-existent file."""
+        replace_in_note = _get_tool("replace_in_note")
+        result = replace_in_note("missing.md", "old", "new")
+
+        assert "does not exist" in result.lower() or "not found" in result.lower()
+
+    @pytest.mark.usefixtures("_patch_vault")
+    def test_replace_placeholder(self, vault_tmp):
+        """Should handle template placeholder replacement."""
+        note = vault_tmp / "template.md"
+        note.write_text(
+            "---\ntitle: Template\n---\n\n## Criteria\n\n- [ ] {{criteria}}\n",
+            encoding="utf-8",
+        )
+        replace_in_note = _get_tool("replace_in_note")
+        result = replace_in_note(
+            "template.md", "{{criteria}}", "All tests pass and docs updated",
+        )
+
+        assert "Replaced 1 occurrence" in result
+
+        content = note.read_text(encoding="utf-8")
+        assert "All tests pass and docs updated" in content
+        assert "{{criteria}}" not in content
+
+    @pytest.mark.usefixtures("_patch_vault")
+    def test_replace_preserves_frontmatter(self, vault_tmp, simple_note):
+        """Should only modify body, not frontmatter."""
+        replace_in_note = _get_tool("replace_in_note")
+        result = replace_in_note("simple.md", "Content here.", "Updated content.")
+
+        assert "Replaced 1 occurrence" in result
+
+        content = simple_note.read_text(encoding="utf-8")
+        assert "title: Simple" in content
+        assert "status: draft" in content
+        assert "Updated content." in content
+
+
 class TestUpdateTaskStatus:
     """Tests for update_task_status tool."""
 

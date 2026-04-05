@@ -261,6 +261,28 @@ Result: New "Activity" section created before "Logs" (if present), not at end of
 
 ---
 
+### `replace_in_note`
+
+Replace text in a note's body content. Performs plain string find-and-replace (not regex). Fails if the text is not found.
+
+**Parameters:**
+| Name | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `note_path` | string | Yes | - | Path to note relative to vault root |
+| `old_text` | string | Yes | - | The exact text to find |
+| `new_text` | string | Yes | - | The replacement text |
+| `count` | integer | No | `1` | Occurrences to replace. `1` = first match, `0` = replace all |
+
+**Returns:** Success message or error description.
+
+**Example:**
+```
+Input: note_path="tasks/MDV-001.md", old_text="{{criteria}}", new_text="All tests pass"
+Result: Replaced 1 occurrence(s) in tasks/MDV-001.md
+```
+
+---
+
 ### `update_task_status`
 
 Toggle a markdown task checkbox in a note.

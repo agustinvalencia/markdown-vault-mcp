@@ -109,6 +109,57 @@ def register_update_tools(mcp: FastMCP) -> None:  # noqa: PLR0915
             return f"Error appending to note: {e}"
 
     @mcp.tool()
+    def replace_in_note(
+        note_path: str,
+        old_text: str,
+        new_text: str,
+        count: int = 1,
+    ) -> str:
+        """Replace text in a note's body content.
+
+        Performs plain string find-and-replace on the note body (not
+        frontmatter). Fails if old_text is not found.
+
+        Args:
+            note_path: Path to the note relative to vault root.
+            old_text: The exact text to find.
+            new_text: The replacement text.
+            count: Number of occurrences to replace. 1 = first match only
+                   (default), 0 = replace all.
+
+        Returns:
+            Success message or error description.
+        """
+        full_path = VAULT_PATH / note_path
+        result = validate_file(full_path)
+        if not result.ok:
+            return result.msg
+
+        try:
+            def modifier(body: str) -> tuple[str, str]:
+                if old_text not in body:
+                    raise ValueError(
+                        f"Text not found in {note_path}: {old_text!r}"
+                    )
+
+                if count == 0:
+                    n = body.count(old_text)
+                    new_body = body.replace(old_text, new_text)
+                    return new_body, (
+                        f"Replaced all {n} occurrence(s) in {note_path}"
+                    )
+
+                new_body = body.replace(old_text, new_text, count)
+                return new_body, (
+                    f"Replaced {count} occurrence(s) in {note_path}"
+                )
+
+            return update_note_content(full_path, modifier)
+
+        except Exception as e:
+            return f"Error replacing text: {e}"
+
+    @mcp.tool()
     def update_task_status(note_path: str, task_pattern: str, completed: bool) -> str:
         """Update the status of a task checkbox in a note.
 
